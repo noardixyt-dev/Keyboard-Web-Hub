@@ -2,11 +2,10 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Melatonin | Perfect Reconstruction</title>
+    <title>Melatonin | Rhythm Studio</title>
     <style>
         :root {
-            --bg: #1a1a2e;
-            --accent: #ffb7ce;
+            --bg: #12121a;
             --fire: #ff6d24;
             --glow: #ffcf40;
         }
@@ -17,105 +16,92 @@
             overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
 
-        /* Dream Atmosphere */
-        .dream-world {
-            width: 100%; height: 100%;
-            background: linear-gradient(180deg, #1a1a2e 0%, #2d1b33 100%);
-            display: flex; align-items: center; justify-content: center;
-            position: relative;
+        .container {
+            width: 1000px; height: 600px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(40px);
+            border-radius: 40px; border: 1px solid rgba(255,255,255,0.05);
+            position: relative; overflow: hidden;
         }
 
-        /* Die Wäscheleine */
         .rope {
-            position: absolute; top: 35%; width: 100%; height: 2px;
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            z-index: 1;
+            position: absolute; top: 180px; width: 100%; height: 2px;
+            background: rgba(255,255,255,0.1); z-index: 1;
         }
 
-        /* Das Polaroid */
+        /* Das Foto */
         .photo {
-            position: absolute; top: 35%; height: 200px;
-            background: white; padding: 10px; padding-bottom: 35px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            position: absolute; top: 180px; width: 120px; height: 180px;
+            background: #fff; padding: 8px; padding-bottom: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             transform-origin: top center;
             z-index: 5;
-            /* Melatonin Burn Effect via Mask */
-            -webkit-mask-image: linear-gradient(to right, transparent var(--burn), black var(--burn));
-            mask-image: linear-gradient(to right, transparent var(--burn), black var(--burn));
-            --burn: 0%;
-            display: flex; flex-direction: column;
+            display: none; /* Wird erst beim Call/Response eingeblendet */
         }
 
-        .photo-image {
+        .photo-inner {
             width: 100%; height: 100%;
-            background: linear-gradient(135deg, #a2d2ff, #ffb7ce);
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            position: relative;
+            overflow: hidden;
         }
 
-        /* Glühende Brandkante */
-        .photo.burning::after {
-            content: ''; position: absolute; top: 0; left: var(--burn);
-            width: 10px; height: 100%; background: var(--glow);
+        /* Der Burn-Effekt (Ankokeln von unten) */
+        .burn-layer {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: #111; height: 0%; /* Wächst beim Brennen */
+            opacity: 0.9;
+        }
+
+        /* Glühende Kante */
+        .photo.is-burning::after {
+            content: ''; position: absolute; bottom: var(--burn-height);
+            left: 0; width: 100%; height: 15px; background: var(--glow);
             filter: blur(8px); box-shadow: 0 0 20px var(--fire);
+            z-index: 10;
         }
 
-        /* Zippo Mechanical Center */
+        /* Zippo */
         .zippo {
-            position: absolute; bottom: 15%; left: 50%;
+            position: absolute; bottom: 80px; left: 50%;
             transform: translateX(-50%); width: 80px; height: 120px;
             z-index: 100;
         }
 
-        .zippo-body {
-            position: absolute; bottom: 0; width: 100%; height: 75px;
-            background: #444; border-radius: 4px;
-        }
-
+        .zippo-body { position: absolute; bottom: 0; width: 100%; height: 75px; background: #333; border-radius: 4px; }
         .zippo-lid {
-            position: absolute; bottom: 75px; width: 100%; height: 35px;
-            background: #555; border-radius: 4px 4px 0 0;
-            transform-origin: left bottom; transition: transform 0.08s ease-out;
+            position: absolute; bottom: 75px; width: 100%; height: 35px; background: #444;
+            border-radius: 4px 4px 0 0; transform-origin: left bottom;
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .zippo.open .zippo-lid { transform: rotate(-115deg) translateX(-10px); }
-
+        .open .zippo-lid { transform: rotate(-120deg) translateX(-5px); }
         .flame {
-            position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
-            width: 25px; height: 50px; background: var(--fire);
-            border-radius: 50% 50% 20% 20%; filter: blur(3px);
-            opacity: 0; transition: opacity 0.05s;
-            box-shadow: 0 0 30px var(--fire);
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 24px; height: 50px; background: var(--fire);
+            border-radius: 50% 50% 20% 20%; filter: blur(4px);
+            opacity: 0; box-shadow: 0 0 30px var(--fire);
+        }
+        .open .flame { opacity: 1; animation: flicker 0.1s infinite; }
+        @keyframes flicker { 50% { transform: translateX(-50%) scale(1.1); } }
+
+        #status {
+            position: absolute; top: 40px; width: 100%; text-align: center;
+            color: white; letter-spacing: 5px; opacity: 0.5; font-size: 14px;
         }
 
-        .zippo.open .flame { opacity: 1; animation: flicker 0.1s infinite; }
-        @keyframes flicker { 50% { transform: translateX(-50%) scale(1.1) rotate(2deg); } }
-
-        #overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.7);
-            z-index: 1000; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; color: white;
-            backdrop-filter: blur(10px);
+        #start-btn {
+            position: absolute; inset: 0; margin: auto; width: 200px; height: 60px;
+            border-radius: 30px; border: none; font-weight: bold; cursor: pointer; z-index: 1000;
         }
-
-        button {
-            padding: 15px 50px; font-size: 18px; border-radius: 50px;
-            border: none; cursor: pointer; font-weight: bold; background: #fff;
-            transition: transform 0.2s;
-        }
-        button:hover { transform: scale(1.1); }
     </style>
 </head>
 <body>
 
-<div class="dream-world">
-    <div id="overlay">
-        <h1 style="letter-spacing: 10px;">MELATONIN</h1>
-        <p style="opacity: 0.6;">HOLD SPACE TO BURN</p>
-        <button id="start-btn">ENTER DREAM</button>
-    </div>
-
+<div class="container">
+    <div id="status">PRESS START</div>
+    <button id="start-btn">START DREAM</button>
     <div class="rope"></div>
-    <div id="stage"></div>
+    <div id="track"></div>
 
     <div class="zippo" id="zippo">
         <div class="flame"></div>
@@ -125,150 +111,124 @@
 </div>
 
 <script>
-    let audioCtx, startTime, isBurning = false;
-    let gameActive = false;
+    let audioCtx, startTime, isSpaceDown = false, phase = 'call';
     let photos = [];
-    
-    // Engine Settings
-    const BPM = 100;
-    const BEAT = 60000 / BPM;
-    const SPEED = 300; // Pixels per beat
+    const bpm = 100;
+    const beat = 60000 / bpm;
+    const loopDuration = beat * 8;
 
-    // Audio Elements
-    let noiseNode, noiseGain;
-
-    function initAudio() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Burn Noise (Knistern)
-        const bufferSize = audioCtx.sampleRate * 2;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-        
-        noiseNode = audioCtx.createBufferSource();
-        noiseNode.buffer = buffer;
-        noiseNode.loop = true;
-        
-        noiseGain = audioCtx.createGain();
-        noiseGain.gain.value = 0;
-        
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = 1000;
-
-        noiseNode.connect(filter);
-        filter.connect(noiseGain);
-        noiseGain.connect(audioCtx.destination);
-        noiseNode.start();
-    }
-
-    function playNote(freq, vol, dur, type='triangle') {
-        const osc = audioCtx.createOscillator();
+    // --- AUDIO ---
+    function playSound(freq, vol, dur, type='sine', delay=0) {
+        const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        g.gain.setValueAtTime(vol, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-        osc.connect(g); g.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + dur);
+        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        g.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + dur);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(audioCtx.currentTime + delay); o.stop(audioCtx.currentTime + delay + dur);
     }
 
+    function playShutter() {
+        playSound(1200, 0.05, 0.05, 'square'); // Klick
+        playSound(400, 0.03, 0.08, 'sine', 0.02); // Klack
+    }
+
+    // --- ENGINE ---
     function spawnPhotos() {
-        const stage = document.getElementById('stage');
-        stage.innerHTML = "";
+        const track = document.getElementById('track');
+        track.innerHTML = "";
         photos = [];
-        
-        // Pattern: Hit, Hit, Long-Hold
+        // Pattern: Viertel, Viertel, Halbe (Lang)
         const pattern = [
-            { beat: 2, w: 100 },
-            { beat: 4, w: 100 },
-            { beat: 6, w: 400 } // Long note
+            { t: 1, w: 100, dur: 0.5 },
+            { t: 2, w: 100, dur: 0.5 },
+            { t: 4, w: 300, dur: 2.0 }
         ];
 
         pattern.forEach(p => {
-            const div = document.createElement('div');
-            div.className = 'photo';
-            div.style.width = p.w + "px";
-            div.innerHTML = `<div class="photo-image"></div>`;
-            stage.appendChild(div);
-            photos.push({ el: div, beat: p.beat, w: p.w, burnProgress: 0 });
+            const el = document.createElement('div');
+            el.className = 'photo';
+            el.style.width = p.w + "px";
+            el.innerHTML = `<div class="photo-inner"><div class="burn-layer"></div></div>`;
+            track.appendChild(el);
+            photos.push({ el, beat: p.beat, t: p.t, burnt: 0, triggered: false });
         });
     }
 
     function update() {
-        if (!gameActive) return;
-        
         const now = performance.now();
-        const elapsed = (now - startTime) % (BEAT * 8);
-        const currentBeat = elapsed / BEAT;
+        const elapsed = (now - startTime) % loopDuration;
+        const currentBeat = elapsed / beat;
 
-        const centerX = window.innerWidth / 2;
+        document.getElementById('status').innerText = phase === 'call' ? "HÖR ZU (TAKT)" : "DEIN ZUG";
 
         photos.forEach(p => {
-            // Precision movement based on beats
-            const x = centerX + (p.beat - currentBeat) * SPEED;
+            // Horizontale Bewegung
+            const x = 500 + (p.t - currentBeat) * 250;
             p.el.style.left = x + "px";
+            p.el.style.display = 'block';
 
-            // Collision check with Zippo
-            const rect = p.el.getBoundingClientRect();
-            if (isBurning && centerX >= rect.left && centerX <= rect.right) {
-                p.el.classList.add('burning');
-                const pLocal = (centerX - rect.left) / rect.width;
-                if (pLocal * 100 > p.burnProgress) {
-                    p.burnProgress = pLocal * 100;
-                    p.el.style.setProperty('--burn', p.burnProgress + "%");
-                    noiseGain.gain.setTargetAtTime(0.15, audioCtx.currentTime, 0.05);
+            // Call Phase: Automatischer Sound im Takt
+            if (phase === 'call' && Math.abs(currentBeat - p.t) < 0.05 && !p.triggered) {
+                playShutter();
+                p.el.style.transform = "scale(1.1)";
+                setTimeout(() => p.el.style.transform = "scale(1)", 100);
+                p.triggered = true;
+            }
+
+            // Response Phase: Verbrennen
+            if (phase === 'response') {
+                const rect = p.el.getBoundingClientRect();
+                const zippoX = window.innerWidth / 2;
+
+                if (isSpaceDown && zippoX >= rect.left && zippoX <= rect.right) {
+                    p.el.classList.add('is-burning');
+                    p.burnt = Math.min(100, p.burnt + 1.5); // Ankokeln
+                    p.el.querySelector('.burn-layer').style.height = p.burnt + "%";
+                    p.el.style.setProperty('--burn-height', p.burnt + "%");
+                } else {
+                    p.el.classList.remove('is-burning');
                 }
-            } else {
-                p.el.classList.remove('burning');
             }
         });
 
-        // Loop Music / Ticks
-        if (Math.floor(currentBeat) !== this.lastBeat) {
-            this.lastBeat = Math.floor(currentBeat);
-            if (this.lastBeat % 4 === 0) {
-                playNote(110, 0.1, 1, 'sine'); // Lo-Fi Kick
-                playNote(330, 0.03, 2, 'triangle'); // Pad
-            }
+        // Loop Switch
+        if (currentBeat > 7.9 && !this.resetting) {
+            this.resetting = true;
+            setTimeout(() => {
+                phase = phase === 'call' ? 'response' : 'call';
+                spawnPhotos();
+                this.resetting = false;
+            }, 100);
         }
-
-        // Auto-Reset Loop
-        if (currentBeat < 0.1 && this.needsReset) {
-            spawnPhotos();
-            this.needsReset = false;
-        }
-        if (currentBeat > 7.5) this.needsReset = true;
 
         requestAnimationFrame(update);
     }
 
-    // Input Handling
     window.onkeydown = (e) => {
-        if (e.code === 'Space' && !isBurning && gameActive) {
-            isBurning = true;
+        if (e.code === 'Space' && !isSpaceDown) {
+            isSpaceDown = true;
             document.getElementById('zippo').classList.add('open');
-            playNote(1500, 0.05, 0.05, 'square'); // Click Open
+            playSound(1500, 0.05, 0.05, 'square');
         }
     };
-
     window.onkeyup = (e) => {
-        if (e.code === 'Space' && gameActive) {
-            isBurning = false;
+        if (e.code === 'Space') {
+            isSpaceDown = false;
             document.getElementById('zippo').classList.remove('open');
-            playNote(1000, 0.03, 0.05, 'square'); // Click Close
-            noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
         }
     };
 
-    document.getElementById('start-btn').onclick = () => {
-        initAudio();
-        document.getElementById('overlay').style.display = 'none';
-        gameActive = true;
+    document.getElementById('start-btn').onclick = function() {
+        audioCtx = new AudioContext();
+        this.style.display = 'none';
         startTime = performance.now();
         spawnPhotos();
         update();
+        // Background Lo-Fi Kick
+        setInterval(() => {
+            if(audioCtx) playSound(60, 0.1, 0.2, 'sine');
+        }, beat);
     };
 </script>
 </body>
