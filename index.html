@@ -2,328 +2,186 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Melatonin Echo - Call & Response</title>
+    <title>AULA | Rhythm Dreamer</title>
     <style>
         :root {
-            --bg: #f0eaff;
-            --call-color: #ff99c8; /* Rosa für den Computer */
-            --player-color: #a9def9; /* Blau für dich */
-            --glass: rgba(255, 255, 255, 0.6);
+            --bg: #1a1a2e;
+            --glass: rgba(255, 255, 255, 0.07);
+            --call: #ff7eb9;
+            --resp: #7afcff;
         }
 
         body {
-            margin: 0; background: var(--bg);
-            font-family: 'Segoe UI', sans-serif;
+            margin: 0; padding: 0; height: 100vh;
+            background: radial-gradient(circle at center, #2e1a47 0%, #10101a 100%);
             display: flex; align-items: center; justify-content: center;
-            height: 100vh; overflow: hidden; color: #5a5a7a;
+            font-family: 'Inter', sans-serif; color: white; overflow: hidden;
         }
 
-        #game-board {
-            width: 600px; padding: 40px;
+        .glass-ui {
             background: var(--glass);
-            backdrop-filter: blur(20px);
-            border-radius: 50px;
-            box-shadow: 0 20px 50px rgba(150, 130, 200, 0.2);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 40px;
+            padding: 60px;
             text-align: center;
-            border: 2px solid white;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            width: 550px;
         }
 
-        .status { font-size: 24px; font-weight: 300; letter-spacing: 3px; margin-bottom: 20px; text-transform: uppercase; }
-
-        /* Das "Herz" des Spiels - Die Taktanzeige */
-        .metronome {
-            display: flex; justify-content: center; gap: 20px; margin: 30px 0;
+        .beat-container {
+            display: flex; justify-content: center; gap: 20px; margin: 40px 0;
         }
 
-        .beat-dot {
-            width: 40px; height: 40px; border-radius: 50%;
-            background: #e0d7f7; transition: transform 0.1s;
-            display: flex; align-items: center; justify-content: center;
+        .dot {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.1s ease;
             position: relative;
         }
 
-        .beat-dot.active { transform: scale(1.3); background: #d0c4f5; }
-        
-        /* Markierung für Call & Response */
-        .dot-inner { width: 60%; height: 60%; border-radius: 50%; opacity: 0; transition: 0.2s; }
-        .call .dot-inner { background: var(--call-color); opacity: 1; box-shadow: 0 0 15px var(--call-color); }
-        .response .dot-inner { background: var(--player-color); opacity: 1; box-shadow: 0 0 15px var(--player-color); }
+        .dot.active { transform: scale(1.2); border-color: rgba(255,255,255,0.5); }
+        .dot.call-hit { background: var(--call); box-shadow: 0 0 30px var(--call); border: none; }
+        .dot.player-hit { background: var(--resp); box-shadow: 0 0 30px var(--resp); border: none; }
 
-        .hint { font-size: 14px; opacity: 0.6; margin-top: 20px; }
-        
-        #btn-start {
-            padding: 15px 40px; border: none; border-radius: 30px;
-            background: white; color: #8a7fb9; cursor: pointer;
-            font-weight: bold; font-size: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        .phase-text {
+            font-size: 28px; font-weight: 200; letter-spacing: 8px;
+            text-transform: uppercase; height: 40px; margin-bottom: 10px;
         }
+
+        #start-btn {
+            background: white; color: black; border: none;
+            padding: 18px 45px; border-radius: 50px; font-weight: bold;
+            cursor: pointer; font-size: 16px; transition: 0.3s;
+        }
+
+        #start-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--resp); }
+        
+        .instructions { font-size: 12px; opacity: 0.4; margin-top: 30px; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
-    <div id="game-board">
-        <div id="status" class="status">Bereit?</div>
-        
-        <div class="metronome" id="metronome">
-            <div class="beat-dot" id="dot-0"><div class="dot-inner"></div></div>
-            <div class="beat-dot" id="dot-1"><div class="dot-inner"></div></div>
-            <div class="beat-dot" id="dot-2"><div class="dot-inner"></div></div>
-            <div class="beat-dot" id="dot-3"><div class="dot-inner"></div></div>
-        </div>
-
-        <button id="btn-start" onclick="initGame()">TRAUM STARTEN</button>
-        <div id="feedback" style="margin-top: 15px; font-weight: bold;"></div>
-        <div class="hint">LEERTASTE drücken, wenn du dran bist!</div>
+<div class="glass-ui">
+    <div class="phase-text" id="phase-display">Rhythm Dream</div>
+    <div class="beat-container" id="visualizer">
+        <div class="dot" id="d0"></div>
+        <div class="dot" id="d1"></div>
+        <div class="dot" id="d2"></div>
+        <div class="dot" id="d3"></div>
     </div>
+    <button id="start-btn">TRAUM STARTEN</button>
+    <div id="feedback" style="margin-top: 20px; font-weight: bold; color: var(--resp);"></div>
+    <div class="instructions">HÖR ZU (PINK) → REAGIERE (BLAU) MIT LEERTASTE</div>
+</div>
 
 <script>
-    let currentBeat = 0;
+    // Audio Engine Setup
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
     let isPlaying = false;
-    let phase = 'waiting'; // 'call' oder 'response'
-    let pattern = [true, false, true, true]; // Der Rhythmus: Hit auf 1, 3, 4
+    let currentBeat = 0;
+    let phase = 'call';
+    let pattern = [true, false, true, true];
     let userInputs = [false, false, false, false];
     let interval;
 
-    const dots = [document.getElementById('dot-0'), document.getElementById('dot-1'), document.getElementById('dot-2'), document.getElementById('dot-3')];
-    const statusText = document.getElementById('status');
-    const feedbackText = document.getElementById('feedback');
+    const startBtn = document.getElementById('start-btn');
+    const phaseDisplay = document.getElementById('phase-display');
+    const dots = [document.getElementById('d0'), document.getElementById('d1'), document.getElementById('d2'), document.getElementById('d3')];
 
-    function initGame() {
-        if (isPlaying) return;
-        isPlaying = true;
-        document.getElementById('btn-start').style.display = 'none';
-        startLoop();
+    function createOscillator(freq, type, duration, vol = 0.1) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
     }
 
+    // Die Musik / Der Metronom-Beat
+    function playKick() { createOscillator(60, 'sine', 0.2, 0.3); } // Kick Drum
+    function playSnap() { createOscillator(800, 'square', 0.05, 0.05); } // Metronom-Klick
+
     function startLoop() {
-        phase = 'call';
-        statusText.innerText = "Hör zu...";
-        statusText.style.color = "var(--call-color)";
-        
-        // Jede 600ms ein Beat (ca. 100 BPM)
+        const bpm = 600; // Tempo
         interval = setInterval(() => {
-            // Animation für den aktuellen Beat
-            dots.forEach(d => d.classList.remove('active'));
+            dots.forEach(d => { d.classList.remove('active'); d.classList.remove('call-hit'); d.classList.remove('player-hit'); });
+            
+            // Metronom immer spielen
+            playSnap();
             dots[currentBeat].classList.add('active');
 
             if (phase === 'call') {
-                // Der Computer zeigt den Rhythmus
                 if (pattern[currentBeat]) {
-                    dots[currentBeat].classList.add('call');
-                    setTimeout(() => dots.forEach(d => d.classList.remove('call')), 200);
+                    dots[currentBeat].classList.add('call-hit');
+                    createOscillator(440, 'triangle', 0.3, 0.2); // Melodie Call
                 }
-            } else if (phase === 'response') {
-                // Hier wartet das System auf deine Eingabe
-                dots[currentBeat].classList.add('response');
-                setTimeout(() => dots.forEach(d => d.classList.remove('response')), 200);
+            } else {
+                // Spieler-Phase
+                if (userInputs[currentBeat]) {
+                    dots[currentBeat].classList.add('player-hit');
+                }
             }
 
             currentBeat++;
-
-            // Wenn ein Takt (4 Beats) vorbei ist
             if (currentBeat > 3) {
                 currentBeat = 0;
-                if (phase === 'call') {
-                    phase = 'response';
-                    statusText.innerText = "DEIN TURN!";
-                    statusText.style.color = "var(--player-color)";
-                    userInputs = [false, false, false, false];
-                } else {
-                    checkAccuracy();
-                    phase = 'call';
-                    statusText.innerText = "Hör zu...";
-                    statusText.style.color = "var(--call-color)";
-                    // Neuen Zufalls-Rhythmus generieren
-                    pattern = Array.from({length: 4}, () => Math.random() > 0.5);
-                }
+                togglePhase();
             }
-        }, 600);
+        }, bpm);
     }
 
-    // Eingabe registrieren
+    function togglePhase() {
+        if (phase === 'call') {
+            phase = 'response';
+            phaseDisplay.innerText = "DEIN ECHO";
+            phaseDisplay.style.color = "var(--resp)";
+            userInputs = [false, false, false, false];
+        } else {
+            checkResult();
+            phase = 'call';
+            phaseDisplay.innerText = "HÖR ZU";
+            phaseDisplay.style.color = "var(--call)";
+            pattern = Array.from({length: 4}, () => Math.random() > 0.5);
+            if (pattern.every(b => !b)) pattern[0] = true; // Mindestens ein Hit
+        }
+    }
+
+    function checkResult() {
+        const correct = JSON.stringify(pattern) === JSON.stringify(userInputs);
+        const fb = document.getElementById('feedback');
+        if (correct) {
+            fb.innerText = "PERFEKT ✨";
+            createOscillator(880, 'sine', 0.5, 0.1); // Erfolgssound
+        } else {
+            fb.innerText = "AUS DEM TAKT... 🌙";
+        }
+        setTimeout(() => fb.innerText = "", 1500);
+    }
+
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Space' && phase === 'response') {
             e.preventDefault();
             userInputs[currentBeat] = true;
-            // Kleiner visueller Effekt beim Drücken
-            dots[currentBeat].style.background = "white";
-            setTimeout(() => dots[currentBeat].style.background = "", 100);
+            createOscillator(330, 'triangle', 0.2, 0.2); // Spieler-Sound
+            dots[currentBeat].classList.add('player-hit');
         }
     });
 
-    function checkAccuracy() {
-        let match = JSON.stringify(pattern) === JSON.stringify(userInputs);
-        if (match) {
-            feedbackText.innerText = "PERFEKT! ✨";
-            feedbackText.style.color = "#4CAF50";
-        } else {
-            feedbackText.innerText = "Versuch's nochmal... 🌙";
-            feedbackText.style.color = "#FF5252";
-        }
-    }
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <title>Melatonin Echo - Call & Response</title>
-    <style>
-        :root {
-            --bg: #f0eaff;
-            --call-color: #ff99c8; /* Rosa für den Computer */
-            --player-color: #a9def9; /* Blau für dich */
-            --glass: rgba(255, 255, 255, 0.6);
-        }
-
-        body {
-            margin: 0; background: var(--bg);
-            font-family: 'Segoe UI', sans-serif;
-            display: flex; align-items: center; justify-content: center;
-            height: 100vh; overflow: hidden; color: #5a5a7a;
-        }
-
-        #game-board {
-            width: 600px; padding: 40px;
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border-radius: 50px;
-            box-shadow: 0 20px 50px rgba(150, 130, 200, 0.2);
-            text-align: center;
-            border: 2px solid white;
-        }
-
-        .status { font-size: 24px; font-weight: 300; letter-spacing: 3px; margin-bottom: 20px; text-transform: uppercase; }
-
-        /* Das "Herz" des Spiels - Die Taktanzeige */
-        .metronome {
-            display: flex; justify-content: center; gap: 20px; margin: 30px 0;
-        }
-
-        .beat-dot {
-            width: 40px; height: 40px; border-radius: 50%;
-            background: #e0d7f7; transition: transform 0.1s;
-            display: flex; align-items: center; justify-content: center;
-            position: relative;
-        }
-
-        .beat-dot.active { transform: scale(1.3); background: #d0c4f5; }
-        
-        /* Markierung für Call & Response */
-        .dot-inner { width: 60%; height: 60%; border-radius: 50%; opacity: 0; transition: 0.2s; }
-        .call .dot-inner { background: var(--call-color); opacity: 1; box-shadow: 0 0 15px var(--call-color); }
-        .response .dot-inner { background: var(--player-color); opacity: 1; box-shadow: 0 0 15px var(--player-color); }
-
-        .hint { font-size: 14px; opacity: 0.6; margin-top: 20px; }
-        
-        #btn-start {
-            padding: 15px 40px; border: none; border-radius: 30px;
-            background: white; color: #8a7fb9; cursor: pointer;
-            font-weight: bold; font-size: 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-    </style>
-</head>
-<body>
-
-    <div id="game-board">
-        <div id="status" class="status">Bereit?</div>
-        
-        <div class="metronome" id="metronome">
-            <div class="beat-dot" id="dot-0"><div class="dot-inner"></div></div>
-            <div class="beat-dot" id="dot-1"><div class="dot-inner"></div></div>
-            <div class="beat-dot" id="dot-2"><div class="dot-inner"></div></div>
-            <div class="beat-dot" id="dot-3"><div class="dot-inner"></div></div>
-        </div>
-
-        <button id="btn-start" onclick="initGame()">TRAUM STARTEN</button>
-        <div id="feedback" style="margin-top: 15px; font-weight: bold;"></div>
-        <div class="hint">LEERTASTE drücken, wenn du dran bist!</div>
-    </div>
-
-<script>
-    let currentBeat = 0;
-    let isPlaying = false;
-    let phase = 'waiting'; // 'call' oder 'response'
-    let pattern = [true, false, true, true]; // Der Rhythmus: Hit auf 1, 3, 4
-    let userInputs = [false, false, false, false];
-    let interval;
-
-    const dots = [document.getElementById('dot-0'), document.getElementById('dot-1'), document.getElementById('dot-2'), document.getElementById('dot-3')];
-    const statusText = document.getElementById('status');
-    const feedbackText = document.getElementById('feedback');
-
-    function initGame() {
+    startBtn.onclick = () => {
+        if (!audioCtx) audioCtx = new AudioCtx();
         if (isPlaying) return;
         isPlaying = true;
-        document.getElementById('btn-start').style.display = 'none';
+        startBtn.style.opacity = '0';
+        setTimeout(() => startBtn.style.display = 'none', 300);
         startLoop();
-    }
-
-    function startLoop() {
-        phase = 'call';
-        statusText.innerText = "Hör zu...";
-        statusText.style.color = "var(--call-color)";
-        
-        // Jede 600ms ein Beat (ca. 100 BPM)
-        interval = setInterval(() => {
-            // Animation für den aktuellen Beat
-            dots.forEach(d => d.classList.remove('active'));
-            dots[currentBeat].classList.add('active');
-
-            if (phase === 'call') {
-                // Der Computer zeigt den Rhythmus
-                if (pattern[currentBeat]) {
-                    dots[currentBeat].classList.add('call');
-                    setTimeout(() => dots.forEach(d => d.classList.remove('call')), 200);
-                }
-            } else if (phase === 'response') {
-                // Hier wartet das System auf deine Eingabe
-                dots[currentBeat].classList.add('response');
-                setTimeout(() => dots.forEach(d => d.classList.remove('response')), 200);
-            }
-
-            currentBeat++;
-
-            // Wenn ein Takt (4 Beats) vorbei ist
-            if (currentBeat > 3) {
-                currentBeat = 0;
-                if (phase === 'call') {
-                    phase = 'response';
-                    statusText.innerText = "DEIN TURN!";
-                    statusText.style.color = "var(--player-color)";
-                    userInputs = [false, false, false, false];
-                } else {
-                    checkAccuracy();
-                    phase = 'call';
-                    statusText.innerText = "Hör zu...";
-                    statusText.style.color = "var(--call-color)";
-                    // Neuen Zufalls-Rhythmus generieren
-                    pattern = Array.from({length: 4}, () => Math.random() > 0.5);
-                }
-            }
-        }, 600);
-    }
-
-    // Eingabe registrieren
-    window.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && phase === 'response') {
-            e.preventDefault();
-            userInputs[currentBeat] = true;
-            // Kleiner visueller Effekt beim Drücken
-            dots[currentBeat].style.background = "white";
-            setTimeout(() => dots[currentBeat].style.background = "", 100);
-        }
-    });
-
-    function checkAccuracy() {
-        let match = JSON.stringify(pattern) === JSON.stringify(userInputs);
-        if (match) {
-            feedbackText.innerText = "PERFEKT! ✨";
-            feedbackText.style.color = "#4CAF50";
-        } else {
-            feedbackText.innerText = "Versuch's nochmal... 🌙";
-            feedbackText.style.color = "#FF5252";
-        }
-    }
+    };
 </script>
 </body>
 </html>
