@@ -2,217 +2,184 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AULA F75 | Liquid Glass Configurator</title>
+    <title>Melatonin Lite | Rhythm Mini-Game</title>
     <style>
         :root {
-            /* Dark Mode Gradients */
-            --bg-grad: linear-gradient(135deg, #0f111a 0%, #1a1d2b 100%);
-            --glass: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --text: #ffffff;
+            --bg: linear-gradient(135deg, #1a1c2c 0%, #4a1942 100%);
+            --glass: rgba(255, 255, 255, 0.05);
             --accent: #00f2ff;
-            --blur: blur(25px);
+            --perfect: #00ff88;
         }
-
-        body.light-mode {
-            /* Light Mode Gradients */
-            --bg-grad: linear-gradient(135deg, #e0e0e0 0%, #ffffff 100%);
-            --glass: rgba(255, 255, 255, 0.4);
-            --glass-border: rgba(0, 0, 0, 0.05);
-            --text: #1a1a1a;
-            --accent: #007bff;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; transition: background 0.5s ease, color 0.3s ease; }
-
         body {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--bg-grad);
-            background-attachment: fixed;
-            background-size: cover;
-            color: var(--text);
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0; padding: 0; overflow: hidden;
+            background: var(--bg);
+            font-family: 'Segoe UI', sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; color: white;
         }
-
-        #bg-container {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            background-size: cover;
-            background-position: center;
-            transition: opacity 1s ease;
-        }
-
-        .glass-panel {
+        #game-container {
+            position: relative;
+            width: 600px; height: 400px;
             background: var(--glass);
-            backdrop-filter: var(--blur);
-            -webkit-backdrop-filter: var(--blur);
-            border: 1px solid var(--glass-border);
-            border-radius: 32px;
-            padding: 40px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            max-width: 1000px;
-            width: 90%;
-            animation: fadeIn 0.8s ease-out;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
         }
-
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-
-        /* AULA F75 75% Layout Grid */
-        .keyboard {
-            display: grid;
-            grid-template-columns: repeat(30, 1fr);
-            gap: 5px;
-            background: rgba(0,0,0,0.15);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 30px;
+        /* The "Target" Zone */
+        #target-circle {
+            width: 80px; height: 80px;
+            border: 4px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 2;
         }
-
-        .key {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            height: 38px;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            cursor: pointer;
-            grid-column: span 2;
-        }
-        .key:hover { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
-
-        /* Menu Grid */
-        .menu-system { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
-        .liquid-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--glass-border);
-            padding: 25px;
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-        }
-
-        .btn {
+        .note {
+            width: 40px; height: 40px;
             background: var(--accent);
-            color: #000;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
+            border-radius: 12px;
+            position: absolute;
+            filter: drop-shadow(0 0 10px var(--accent));
         }
-
-        input[type="file"] { display: none; }
-        .file-label {
-            display: block;
-            text-align: center;
-            padding: 10px;
-            border: 1px dashed var(--glass-border);
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-top: 10px;
+        #score-panel {
+            position: absolute; top: 20px; font-size: 24px; font-weight: bold;
+            letter-spacing: 2px;
         }
-
-        select, input[type="color"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
-            border-radius: 8px;
-            border: 1px solid var(--glass-border);
-            background: rgba(0,0,0,0.2);
-            color: inherit;
+        #feedback {
+            position: absolute; bottom: 50px; font-size: 32px; font-weight: 800;
+            text-transform: uppercase; opacity: 0; transform: translateY(20px);
+        }
+        .animate-feedback { animation: pop 0.4s ease-out; }
+        @keyframes pop {
+            0% { opacity: 0; transform: translateY(20px); }
+            50% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10); }
+        }
+        .start-screen {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10; border-radius: 30px;
+        }
+        button {
+            padding: 15px 40px; font-size: 18px; border: none; border-radius: 50px;
+            background: var(--accent); cursor: pointer; font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-<div id="bg-container"></div>
+    <div id="score-panel">SCORE: <span id="score">0</span></div>
 
-<div class="glass-panel">
-    <header>
-        <div>
-            <h1 style="letter-spacing: 2px;">AULA F75 <span style="font-weight: 100; opacity: 0.6;">PRO</span></h1>
-            <p id="status" style="font-size: 12px; color: #ff4b2b;">● KEYBOARD DISCONNECTED</p>
-        </div>
-        <button class="btn" style="width: auto; padding: 10px 20px;" onclick="toggleMode()">🌓 TOGGLE THEME</button>
-    </header>
-
-    <div class="keyboard">
-        <div class="key">Esc</div><div class="key">F1</div><div class="key">F2</div><div class="key">F3</div><div class="key">F4</div><div class="key">F5</div><div class="key">F6</div><div class="key">F7</div><div class="key">F8</div><div class="key">F9</div><div class="key">F10</div><div class="key">F11</div><div class="key">F12</div><div class="key">Del</div>
-        <div class="key">~</div><div class="key">1</div><div class="key">2</div><div class="key">3</div><div class="key">4</div><div class="key">5</div><div class="key">6</div><div class="key">7</div><div class="key">8</div><div class="key">9</div><div class="key">0</div><div class="key">-</div><div class="key">=</div><div class="key" style="grid-column: span 4">Back</div>
-        <div class="key" style="grid-column: span 3">Tab</div><div class="key">Q</div><div class="key">W</div><div class="key">E</div><div class="key">R</div><div class="key">T</div><div class="key">Y</div><div class="key">U</div><div class="key">I</div><div class="key">O</div><div class="key">P</div><div class="key">[</div><div class="key">]</div><div class="key" style="grid-column: span 3">\</div>
-        <div class="key" style="grid-column: span 3">Ctrl</div><div class="key" style="grid-column: span 3">Win</div><div class="key" style="grid-column: span 3">Alt</div><div class="key" style="grid-column: span 12">SPACEBAR</div><div class="key" style="grid-column: span 2">Alt</div><div class="key" style="grid-column: span 2">Fn</div><div class="key">←</div><div class="key">↓</div><div class="key">→</div>
-    </div>
-
-    <div class="menu-system">
-        <div class="liquid-card">
-            <h3>Lighting Console</h3>
-            <select id="eff"><option>Breathing Glass</option><option>Liquid Flow</option><option>Static Frost</option></select>
-            <input type="color" id="clr" value="#00f2ff">
-            <button class="btn" id="apply">PUSH TO KEYBOARD</button>
-        </div>
-
-        <div class="liquid-card">
-            <h3>Environment</h3>
-            <button class="btn" id="connect" style="background: white;">PAIR HID DEVICE</button>
-            <label class="file-label">
-                📷 UPLOAD BACKGROUND
-                <input type="file" id="bgUpload" accept="image/*">
-            </label>
-        </div>
-    </div>
-</div>
-
-<script>
-    let device;
-
-    function toggleMode() {
-        document.body.classList.toggle('light-mode');
-    }
-
-    // Background Upload Logic
-    document.getElementById('bgUpload').onchange = function(e) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            document.getElementById('bg-container').style.backgroundImage = `url('${event.target.result}')`;
-        };
-        reader.readAsDataURL(file);
-    };
-
-    // WebHID Connection
-    document.getElementById('connect').onclick = async () => {
-        try {
-            const devices = await navigator.hid.requestDevice({ filters: [{ vendorId: 0x258A }] });
-            device = devices[0];
-            await device.open();
-            document.getElementById('status').innerHTML = "● CONNECTED: " + device.deviceName;
-            document.getElementById('status').style.color = "#00ff88";
-        } catch (e) { console.error(e); }
-    };
-
-    document.getElementById('apply').onclick = async () => {
-        if(!device) return alert("Please Pair Keyboard first!");
-        const hex = document.getElementById('clr').value;
-        const r = parseInt(hex.slice(1,3), 16);
-        const g = parseInt(hex.slice(3,5), 16);
-        const b = parseInt(hex.slice(5,7), 16);
+    <div id="game-container">
+        <div id="target-circle"></div>
+        <div id="feedback">PERFECT!</div>
         
-        // Sending the standard AULA lighting report (64 bytes)
-        const data = new Uint8Array(63);
-        data[0] = 0x05; data[1] = 0x01; data[2] = r; data[3] = g; data[4] = b;
-        await device.sendReport(0x00, data);
-    };
-</script>
+        <div class="start-screen" id="start-screen">
+            <h2 style="margin-bottom:20px">LO-FI RHYTHM</h2>
+            <p style="margin-bottom:30px; opacity:0.7">Hit SPACE when the block hits the center!</p>
+            <button onclick="startGame()">START DREAMING</button>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('game-container');
+        const feedback = document.getElementById('feedback');
+        const scoreEl = document.getElementById('score');
+        const startScreen = document.getElementById('start-screen');
+        
+        let score = 0;
+        let activeNotes = [];
+        let gameRunning = false;
+        let bpm = 110; // Lo-fi tempo
+        let spawnInterval = (60 / bpm) * 1000 * 2; // Every 2 beats
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            gameRunning = true;
+            score = 0;
+            scoreEl.innerText = score;
+            spawnNoteLoop();
+            requestAnimationFrame(update);
+        }
+
+        function spawnNoteLoop() {
+            if (!gameRunning) return;
+            createNote();
+            setTimeout(spawnNoteLoop, spawnInterval);
+        }
+
+        function createNote() {
+            const note = document.createElement('div');
+            note.className = 'note';
+            // Spawn from the right
+            note.style.right = '-50px';
+            note.x = 650;
+            container.appendChild(note);
+            activeNotes.push(note);
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            activeNotes.forEach((note, index) => {
+                note.x -= 4; // Movement speed
+                note.style.left = note.x + 'px';
+
+                // Remove if off screen
+                if (note.x < -50) {
+                    note.remove();
+                    activeNotes.splice(index, 1);
+                }
+            });
+
+            requestAnimationFrame(update);
+        }
+
+        function checkHit() {
+            if (!gameRunning) return;
+
+            // Target center is roughly 300px (600/2)
+            const targetX = 300 - 20; // Adjust for note width
+            let hitFound = false;
+
+            activeNotes.forEach((note, index) => {
+                const diff = Math.abs(note.x - targetX);
+
+                if (diff < 50) { // Hit window
+                    hitFound = true;
+                    if (diff < 15) {
+                        showFeedback("PERFECT!", "#00ff88");
+                        score += 100;
+                    } else {
+                        showFeedback("GOOD", "#00f2ff");
+                        score += 50;
+                    }
+                    note.remove();
+                    activeNotes.splice(index, 1);
+                }
+            });
+
+            if (!hitFound) showFeedback("MISS", "#ff4b2b");
+            scoreEl.innerText = score;
+        }
+
+        function showFeedback(text, color) {
+            feedback.innerText = text;
+            feedback.style.color = color;
+            feedback.classList.remove('animate-feedback');
+            void feedback.offsetWidth; // Trigger reflow
+            feedback.classList.add('animate-feedback');
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                checkHit();
+            }
+        });
+
+        container.addEventListener('mousedown', checkHit);
+    </script>
 </body>
 </html>
