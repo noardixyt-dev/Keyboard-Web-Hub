@@ -2,100 +2,111 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Melatonin | Soft Echo</title>
+    <title>Melatonin | Lo-Fi Sonata</title>
     <style>
         :root {
-            --bg: #1a1a25;
+            --bg: #14141a;
             --accent: #ffb7ce;
             --player: #a2d2ff;
-            --glass: rgba(255, 255, 255, 0.05);
+            --glass: rgba(255, 255, 255, 0.04);
         }
 
         body {
             margin: 0; background: var(--bg);
-            color: white; font-family: 'Inter', sans-serif;
+            color: white; font-family: 'Segoe UI', sans-serif;
             display: flex; align-items: center; justify-content: center;
             height: 100vh; overflow: hidden;
         }
 
         .container {
-            width: 800px; padding: 50px;
+            width: 800px; padding: 40px;
             background: var(--glass);
-            backdrop-filter: blur(40px);
-            border-radius: 40px;
-            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(50px);
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.08);
             text-align: center;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+        }
+
+        .status {
+            font-size: 20px; font-weight: 200; letter-spacing: 12px;
+            text-transform: uppercase; margin-bottom: 30px; color: var(--accent);
         }
 
         .timeline-container {
             position: relative;
-            width: 100%; height: 100px;
+            width: 100%; height: 80px;
             background: rgba(255,255,255,0.02);
-            border-radius: 20px;
+            border-radius: 100px;
             margin: 40px 0;
-            display: flex; align-items: center;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
         }
 
         #seeker {
             position: absolute;
-            left: 0; width: 4px; height: 100%;
+            left: 0; width: 3px; height: 100%;
             background: white;
-            box-shadow: 0 0 20px white;
+            box-shadow: 0 0 20px 2px white;
             z-index: 10;
         }
 
         .note {
             position: absolute;
-            width: 40px; height: 40px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.05);
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: transparent;
             border: 2px solid var(--accent);
             transform: translateX(-50%);
-            transition: all 0.3s ease;
+            top: 25px;
+            transition: all 0.2s ease;
         }
 
-        .note.hit { background: var(--accent); box-shadow: 0 0 30px var(--accent); }
-        .note.success { border-color: var(--player); background: var(--player); box-shadow: 0 0 30px var(--player); }
-        .note.off-key { border-color: #b19cd9; background: rgba(177, 156, 217, 0.5); }
+        .note.hit { background: var(--accent); box-shadow: 0 0 30px var(--accent); transform: translateX(-50%) scale(1.3); }
+        .note.success { border-color: var(--player); background: var(--player); box-shadow: 0 0 30px var(--player); transform: translateX(-50%) scale(1.3); }
 
-        .status { font-size: 22px; font-weight: 200; letter-spacing: 8px; text-transform: uppercase; color: var(--accent); }
-        
-        button {
-            background: white; color: #1a1a25; border: none; padding: 18px 50px;
-            border-radius: 100px; font-weight: 800; cursor: pointer; transition: 0.3s;
+        #start-btn {
+            background: white; color: black; border: none; padding: 20px 60px;
+            border-radius: 100px; font-weight: 900; cursor: pointer;
+            letter-spacing: 2px; transition: 0.3s;
         }
+
+        #start-btn:hover { transform: scale(1.05); background: var(--player); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="status" id="status-text">Traumsequenz</div>
+    <div class="status" id="status-text">Synchronisiere...</div>
     <div class="timeline-container" id="timeline">
         <div id="seeker"></div>
     </div>
-    <button id="start-btn">STARTEN</button>
-    <div id="feedback" style="margin-top: 20px; opacity: 0.6;"></div>
+    <button id="start-btn">TRAUM BETRETEN</button>
 </div>
 
 <script>
     let audioCtx, startTime, seeker, timeline, statusText;
-    let phase = 'call'; 
-    let pattern = [0.2, 0.5, 0.8]; 
+    let phase = 'call';
+    let pattern = [0.25, 0.5, 0.75]; // Klassischer Beat-Takt
+    let melodyFreqs = [440, 523, 659]; // A4, C5, E5 (Kleiner Akkord)
     let userHits = [];
-    const duration = 3000; 
+    const duration = 2400; // Ein ganzer Loop (100 BPM)
 
-    function createSoftSound(freq, vol = 0.15, dur = 0.4) {
+    // Audio Engine
+    function playTone(freq, vol, dur, type='sine') {
         if(!audioCtx) return;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = 'sine'; // Weiche Sinuswelle
+        osc.type = type;
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         gain.gain.setValueAtTime(vol, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + dur);
     }
+
+    function playBass() { playTone(55, 0.4, 0.4, 'sine'); } // Tiefer Sub
+    function playSnap() { playTone(800, 0.05, 0.05, 'triangle'); } // Kurzer Snare-Ersatz
 
     function spawnNotes() {
         document.querySelectorAll('.note').forEach(n => n.remove());
@@ -109,10 +120,21 @@
 
     function gameLoop() {
         const now = performance.now();
-        const progress = ((now - startTime) % duration) / duration;
+        const elapsed = (now - startTime) % duration;
+        const progress = elapsed / duration;
+
         seeker.style.left = (progress * 100) + "%";
 
-        if (progress < 0.01 && !this.locked) {
+        // Drum Machine (Im Takt bleiben)
+        const beatStep = Math.floor(progress * 4);
+        if(this.lastStep !== beatStep) {
+            if(beatStep === 0) playBass(); // Die "1"
+            if(beatStep === 2) playSnap(); // Die "3"
+            this.lastStep = beatStep;
+        }
+
+        // Phasenwechsel
+        if (progress < 0.02 && !this.locked) {
             this.locked = true;
             if (phase === 'call') {
                 phase = 'response';
@@ -120,11 +142,10 @@
                 userHits = [];
                 document.querySelectorAll('.note').forEach(n => n.classList.remove('hit'));
             } else {
-                if (userHits.length < pattern.length) {
-                    document.getElementById('feedback').innerText = "Rhythmus wiederholen...";
-                } else {
-                    pattern = Array.from({length: 3}, () => 0.15 + Math.random() * 0.7);
-                    document.getElementById('feedback').innerText = "Nächster Level";
+                if(userHits.length >= pattern.length) {
+                    // Neues Pattern generieren für "Immer andere Patterns"
+                    pattern = Array.from({length: 3}, () => Math.round((0.1 + Math.random() * 0.8) * 20) / 20);
+                    pattern.sort();
                 }
                 phase = 'call';
                 statusText.innerText = "Hör zu";
@@ -133,12 +154,13 @@
         }
         if (progress > 0.05) this.locked = false;
 
+        // Call Phase Melodie
         if (phase === 'call') {
             const notes = document.querySelectorAll('.note');
             pattern.forEach((p, i) => {
                 if (Math.abs(progress - p) < 0.008 && !notes[i].dataset.played) {
                     notes[i].classList.add('hit');
-                    createSoftSound(440); // A4
+                    playTone(melodyFreqs[i % 3], 0.15, 0.5);
                     notes[i].dataset.played = "true";
                     setTimeout(() => notes[i].dataset.played = "", 500);
                 }
@@ -157,16 +179,14 @@
                 const diff = Math.abs(progress - p);
                 const notes = document.querySelectorAll('.note');
 
-                if (diff < 0.05) { // Perfekt
+                if (diff < 0.06) { // Trefferbereich
                     notes[i].classList.add('success');
-                    createSoftSound(440, 0.2); // A4
+                    playTone(melodyFreqs[i % 3], 0.2, 0.5);
                     userHits.push(i);
                     hitFound = true;
-                } else if (diff < 0.15) { // Leicht daneben
-                    notes[i].classList.add('off-key');
-                    // Spielt einen Halbton tiefer (Ab4 / 415.30Hz)
-                    createSoftSound(415.30, 0.1); 
-                    hitFound = true;
+                } else if (diff < 0.15 && !hitFound) { // Knapp daneben
+                    // Halbnote tiefer & weicher
+                    playTone(melodyFreqs[i % 3] * 0.94, 0.1, 0.3); 
                 }
             });
         }
@@ -175,11 +195,10 @@
     document.getElementById('start-btn').onclick = function() {
         audioCtx = new AudioContext();
         this.style.display = 'none';
+        statusText = document.getElementById('status-text');
         spawnNotes();
         startTime = performance.now();
         gameLoop();
-        // Sanfter Hintergrund-Beat
-        setInterval(() => createSoftSound(60, 0.1, 0.5), 1500); 
     };
 </script>
 </body>
