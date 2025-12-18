@@ -2,13 +2,12 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Melatonin | Long Burn Edition</title>
+    <title>Melatonin | Perfect Burn</title>
     <style>
         :root {
-            --bg: #0f0f1a;
+            --bg: #0d0d12;
             --accent: #ffb7ce;
-            --fire: #ff8c42;
-            --glass: rgba(255, 255, 255, 0.05);
+            --fire: #ff6d24;
         }
 
         body, html {
@@ -17,115 +16,136 @@
             overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
 
-        #sky {
-            position: fixed; inset: 0; z-index: -1;
-            background: radial-gradient(circle at 50% 100%, #1e1e3f 0%, #0a0a12 100%);
-        }
-
         .glass-panel {
             width: 1000px; height: 600px;
-            background: var(--glass);
+            background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(50px);
-            border-radius: 60px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 60px; border: 1px solid rgba(255,255,255,0.1);
             position: relative; overflow: hidden;
         }
 
+        /* Die Leine */
         .rope {
-            position: absolute; top: 150px; width: 100%; height: 2px;
-            background: rgba(255,255,255,0.15);
+            position: absolute; top: 140px; width: 100%; height: 2px;
+            background: rgba(255,255,255,0.2); box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
 
-        /* Polaroid Styling */
+        /* Polaroid mit Burn-Overlay */
         .polaroid {
-            position: absolute; top: 150px; 
-            background: #fff; padding: 6px; padding-bottom: 24px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-            border-radius: 2px; transform-origin: top center;
-            display: flex; flex-direction: column;
-            animation: sway 3s ease-in-out infinite alternate;
+            position: absolute; top: 140px; height: 160px;
+            background: #fff; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform-origin: top center; display: flex;
+            animation: sway 4s ease-in-out infinite alternate;
+        }
+        @keyframes sway { from { transform: rotate(-1.5deg); } to { transform: rotate(1.5deg); } }
+
+        .polaroid-content {
+            width: 100%; height: 100%; position: relative;
+            background: linear-gradient(135deg, #a2d2ff, #ffb7ce);
+            overflow: hidden;
         }
 
-        @keyframes sway {
-            from { transform: rotate(-2deg); }
-            to { transform: rotate(2deg); }
+        /* Das "Verbrannte" Overlay */
+        .burned-overlay {
+            position: absolute; top: 0; left: 0; height: 100%;
+            background: #222; width: 0%; /* Wächst beim Brennen */
+            mix-blend-mode: multiply; opacity: 0.9;
         }
 
-        .polaroid-inner { flex-grow: 1; background: #eee; }
-
-        /* Das Zippo Feuerzeug */
-        .zippo {
-            position: absolute; bottom: 80px; left: 50%;
-            transform: translateX(-50%); width: 70px; height: 110px;
-            background: linear-gradient(to right, #888, #444);
-            border-radius: 6px; z-index: 50;
+        /* Zippo Design */
+        .zippo-container {
+            position: absolute; bottom: 60px; left: 50%;
+            transform: translateX(-50%); width: 80px; height: 120px;
         }
+
+        .zippo-body {
+            position: absolute; bottom: 0; width: 100%; height: 70px;
+            background: #555; border-radius: 5px; z-index: 10;
+        }
+
+        .zippo-lid {
+            position: absolute; bottom: 70px; width: 100%; height: 35px;
+            background: #666; border-radius: 5px 5px 0 0;
+            transform-origin: left bottom; transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 11;
+        }
+
+        .zippo-container.open .zippo-lid { transform: rotate(-110deg) translateX(-5px); }
 
         .flame {
-            position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
-            width: 25px; height: 55px; background: var(--fire);
-            border-radius: 50% 50% 20% 20%; filter: blur(4px);
-            box-shadow: 0 0 30px var(--fire);
-            opacity: 0; transition: opacity 0.1s;
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 20px; height: 45px; background: var(--fire);
+            border-radius: 50% 50% 20% 20%; filter: blur(3px);
+            opacity: 0; box-shadow: 0 0 20px var(--fire);
         }
-
-        .flame.active { opacity: 1; animation: flicker 0.1s infinite; }
-
-        @keyframes flicker {
-            0% { transform: translateX(-50%) scale(1); }
-            100% { transform: translateX(-50%) scale(1.1) rotate(2deg); }
-        }
-
-        .burning { filter: brightness(1.5) sepia(1) saturate(5); transition: 0.1s; }
+        .zippo-container.open .flame { opacity: 1; animation: flicker 0.1s infinite; }
+        @keyframes flicker { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.1); } }
 
         #btn-start {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: white; border: none; padding: 18px 50px; border-radius: 100px;
-            font-weight: 900; cursor: pointer; letter-spacing: 2px;
+            padding: 15px 40px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-<div id="sky"></div>
 <div class="glass-panel">
     <div class="rope"></div>
     <div id="track"></div>
-    <div class="zippo"><div id="flame" class="flame"></div></div>
+    
+    <div class="zippo-container" id="zippo">
+        <div class="flame"></div>
+        <div class="zippo-lid"></div>
+        <div class="zippo-body"></div>
+    </div>
+
     <button id="btn-start">TRAUM STARTEN</button>
 </div>
 
 <script>
-    let audioCtx, startTime, pattern = [];
-    let phase = 'call', activePhotos = [], isHolding = false;
-    const duration = 5000; // Loop Länge
+    let audioCtx, startTime, pattern = [], activePhotos = [], isHolding = false;
+    let burnSoundNode = null;
+    const duration = 4500;
 
-    function playTone(f, v, d, type='sine', delay=0) {
+    // --- verbesserte AUDIO ENGINE ---
+    function playSynth(freq, vol, dur, type='sine', delay=0) {
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
-        o.type = type; o.frequency.setValueAtTime(f, audioCtx.currentTime + delay);
-        g.gain.setValueAtTime(v, audioCtx.currentTime + delay);
-        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + d);
+        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        g.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + dur);
         o.connect(g); g.connect(audioCtx.destination);
-        o.start(audioCtx.currentTime + delay); o.stop(audioCtx.currentTime + delay + d);
+        o.start(audioCtx.currentTime + delay); o.stop(audioCtx.currentTime + delay + dur);
     }
 
-    function playLofi() {
-        // Melancholische Piano Akkorde
-        const chords = [[261, 329, 392], [293, 349, 440]];
-        const c = chords[Math.floor(Date.now()/duration)%2];
-        c.forEach(f => playTone(f, 0.05, 4));
-        // Sanfte Melodie
-        setTimeout(() => playTone(523, 0.03, 1, 'triangle'), 1000);
-        setTimeout(() => playTone(659, 0.03, 1, 'triangle'), 2500);
+    function createBurnNoise() {
+        const bufSize = audioCtx.sampleRate * 1;
+        const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+        const data = buf.getChannelData(0);
+        for(let i=0; i<bufSize; i++) data[i] = Math.random() * 2 - 1;
+        const src = audioCtx.createBufferSource(); src.buffer = buf; src.loop = true;
+        const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 800;
+        const g = audioCtx.createGain(); g.gain.value = 0;
+        src.connect(filter); filter.connect(g); g.connect(audioCtx.destination);
+        src.start();
+        return { src, gain: g };
     }
 
+    function playLoFiBackground() {
+        const now = audioCtx.currentTime;
+        // Rhodes-Style Akkorde
+        [196, 246, 293, 349].forEach(f => playSynth(f, 0.03, 4, 'triangle')); // G7
+        // Minimaler Bass
+        playSynth(49, 0.1, 0.8, 'sine');
+        setTimeout(() => playSynth(65, 0.1, 0.8, 'sine'), 1125);
+    }
+
+    // --- SPIEL LOGIK ---
     function createPattern() {
-        // Erzeugt Mix aus kurzen und langen Noten (start, breite)
         return [
-            {t: 0.1, w: 60},  // Kurz
-            {t: 0.4, w: 180}, // Lang (Hold)
-            {t: 0.75, w: 80}  // Mittel
+            { t: 0.2, w: 80 },  // Kurzer Hit
+            { t: 0.5, w: 220 }, // Langer Hold
+            { t: 0.85, w: 100 } // Mittlerer Hold
         ];
     }
 
@@ -137,89 +157,74 @@
             el.className = 'polaroid';
             el.style.width = p.w + "px";
             el.style.left = "110%";
-            el.innerHTML = `<div class="polaroid-inner" style="background:linear-gradient(45deg, #ff9a9e, #fad0c4)"></div>`;
+            el.innerHTML = `<div class="polaroid-content"><div class="burned-overlay"></div></div>`;
             track.appendChild(el);
-            activePhotos.push({ el, t: p.t, w: p.w, hit: false });
+            activePhotos.push({ el, overlay: el.querySelector('.burned-overlay'), t: p.t, w: p.w, burnPercent: 0 });
         });
     }
 
     function loop() {
-        const progress = ((performance.now() - startTime) % duration) / duration;
+        const now = performance.now();
+        const progress = ((now - startTime) % duration) / duration;
 
         activePhotos.forEach(obj => {
             const xPos = (1.1 - (progress - obj.t + 1) % 1) * 100;
             obj.el.style.left = xPos + "%";
-            
-            // Call Phase: Automatisches Zünden zur Demonstration
-            if(phase === 'call') {
-                const center = 50;
-                const rect = obj.el.getBoundingClientRect();
-                const containerRect = document.querySelector('.glass-panel').getBoundingClientRect();
-                const relativeCenter = containerRect.left + (containerRect.width / 2);
-                
-                if(rect.left < relativeCenter && rect.right > relativeCenter) {
-                    obj.el.classList.add('burning');
-                    if(!obj.sounded) { 
-                        playTone(1800, 0.02, 0.05, 'square'); // Zippo Click
-                        obj.sounded = true; 
-                    }
-                } else {
-                    obj.el.classList.remove('burning');
-                    obj.sounded = false;
+
+            // Collision Check (Mitte des Bildschirms ist das Zippo)
+            const rect = obj.el.getBoundingClientRect();
+            const zippoX = window.innerWidth / 2;
+
+            if(isHolding && rect.left < zippoX && rect.right > zippoX) {
+                // Berechne, welcher Teil des Bildes gerade über der Flamme ist
+                const relativePos = (zippoX - rect.left) / rect.width;
+                if(relativePos > obj.burnPercent / 100) {
+                    obj.burnPercent = relativePos * 100;
+                    obj.overlay.style.width = obj.burnPercent + "%";
+                    burnSoundNode.gain.gain.setTargetAtTime(0.1, audioCtx.currentTime, 0.05);
                 }
+            } else if (isHolding) {
+                // Flamme brennt, aber kein Bild da
+                burnSoundNode.gain.gain.setTargetAtTime(0.02, audioCtx.currentTime, 0.1);
             }
         });
 
+        if(!isHolding && burnSoundNode) burnSoundNode.gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+
         if(progress < 0.01 && !this.locked) {
             this.locked = true;
-            if(phase === 'call') { phase = 'response'; } 
-            else { 
-                phase = 'call'; 
-                pattern = createPattern(); 
-                spawn(); 
-                playLofi(); 
+            playLoFiBackground();
+            if(activePhotos.length > 0 && progress < 0.01) {
+                // Check ob "reingekackt": Wenn Bilder nicht zu > 90% verbrannt sind
             }
+            pattern = createPattern();
+            spawn();
         }
         if(progress > 0.05) this.locked = false;
         requestAnimationFrame(loop);
     }
 
     window.onkeydown = (e) => {
-        if(e.code === 'Space' && !isHolding && phase === 'response') {
+        if(e.code === 'Space' && !isHolding) {
             isHolding = true;
-            document.getElementById('flame').classList.add('active');
-            playTone(1800, 0.04, 0.1, 'square'); // Click Sound
+            document.getElementById('zippo').classList.add('open');
+            playSynth(1500, 0.05, 0.1, 'square'); // Metallischer Klick
         }
     };
 
     window.onkeyup = (e) => {
         if(e.code === 'Space') {
             isHolding = false;
-            document.getElementById('flame').classList.remove('active');
+            document.getElementById('zippo').classList.remove('open');
+            playSynth(1200, 0.03, 0.05, 'square'); // Schließ-Klick
         }
     };
 
-    // Check collision in Response Phase
-    setInterval(() => {
-        if(phase !== 'response') return;
-        const flame = document.getElementById('flame').getBoundingClientRect();
-        activePhotos.forEach(obj => {
-            const rect = obj.el.getBoundingClientRect();
-            if(isHolding && rect.left < flame.left + 12 && rect.right > flame.left + 12) {
-                obj.el.classList.add('burning');
-                obj.el.style.opacity = "0.5"; // Verbrennt langsam
-            } else {
-                obj.el.classList.remove('burning');
-            }
-        });
-    }, 50);
-
     document.getElementById('btn-start').onclick = function() {
         audioCtx = new AudioContext();
+        burnSoundNode = createBurnNoise();
         this.style.display = 'none';
         startTime = performance.now();
-        pattern = createPattern();
-        spawn();
         loop();
     };
 </script>
