@@ -2,13 +2,12 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Melatonin | Lo-Fi Dreams</title>
+    <title>Melatonin | Shutter & Burn</title>
     <style>
         :root {
-            --bg: #0d0d15;
+            --bg: #0a0a0f;
             --accent: #ffb7ce;
-            --player: #a2d2ff;
-            --glass: rgba(255, 255, 255, 0.05);
+            --glass: rgba(255, 255, 255, 0.04);
         }
 
         body, html {
@@ -17,218 +16,201 @@
             overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
 
-        /* Animierter Liquid Background */
+        /* Moving Liquid Background */
         #bg-canvas {
-            position: fixed; top: 0; left: 0; z-index: -1;
-            width: 100%; height: 100%;
-            background: linear-gradient(125deg, #1a1a2e, #2d1b33, #16213e);
-            background-size: 400% 400%;
-            animation: drift 20s ease infinite;
+            position: fixed; inset: 0; z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #161625 0%, #0a0a0f 100%);
         }
-        @keyframes drift { 0% {background-position: 0% 50%} 50% {background-position: 100% 50%} 100% {background-position: 0% 50%} }
 
-        /* Liquid Glass Panel */
-        .glass-panel {
-            width: 850px; height: 500px;
+        .glass-ui {
+            width: 900px; height: 550px;
             background: var(--glass);
             backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 40px;
             display: flex; flex-direction: column; align-items: center;
-            box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.7);
             position: relative;
         }
 
-        .status-header {
-            margin-top: 30px; font-size: 14px; letter-spacing: 8px;
-            text-transform: uppercase; color: var(--accent); opacity: 0.8;
-        }
-
-        /* Polaroid Bereich */
         .stage {
             flex-grow: 1; width: 100%; position: relative;
             display: flex; justify-content: center; align-items: center;
         }
 
         .polaroid {
-            position: absolute; width: 130px; height: 160px;
-            background: #fff; padding: 8px; padding-bottom: 25px;
-            border-radius: 3px; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-            transform: scale(0) rotate(-5deg);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: absolute; width: 120px; height: 150px;
+            background: #fff; padding: 7px; padding-bottom: 22px;
+            border-radius: 2px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: scale(0);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .polaroid-inner {
             width: 100%; height: 100%; 
-            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
         }
 
-        /* Brenn-Effekt */
-        .ignite {
-            animation: fire 0.6s forwards;
-        }
-        @keyframes fire {
-            0% { transform: scale(1); filter: brightness(1); }
-            30% { transform: scale(1.15) rotate(5deg); filter: brightness(2) saturate(2); }
-            100% { transform: scale(0.5) translateY(-50px) rotate(-10deg); opacity: 0; filter: brightness(0); }
+        /* Burn Animation (Feuerzeug Effekt) */
+        .burn { animation: burnEffect 0.5s forwards; }
+        @keyframes burnEffect {
+            0% { transform: scale(1); filter: brightness(2); }
+            100% { transform: scale(1.4) translateY(-60px) rotate(8deg); opacity: 0; filter: brightness(0) sepia(1); }
         }
 
-        /* Timeline & Seeker */
         .timeline {
-            width: 80%; height: 4px; background: rgba(255,255,255,0.1);
-            border-radius: 2px; margin-bottom: 100px; position: relative;
+            width: 80%; height: 2px; background: rgba(255,255,255,0.05);
+            position: relative; margin-bottom: 90px;
         }
 
         #seeker {
-            position: absolute; left: 0; top: -13px;
-            width: 4px; height: 30px; background: white;
-            box-shadow: 0 0 20px white; border-radius: 2px;
+            position: absolute; left: 0; top: -15px;
+            width: 2px; height: 32px; background: white;
+            box-shadow: 0 0 15px white;
         }
 
-        #start-btn {
+        #btn-start {
             position: absolute; bottom: 30px;
             background: white; color: black; border: none;
-            padding: 15px 45px; border-radius: 50px; cursor: pointer;
-            font-weight: bold; letter-spacing: 2px; transition: 0.3s;
+            padding: 18px 50px; border-radius: 100px; cursor: pointer;
+            font-weight: bold; letter-spacing: 2px;
         }
-        #start-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--accent); }
     </style>
 </head>
 <body>
 
 <div id="bg-canvas"></div>
 
-<div class="glass-panel">
-    <div id="status" class="status-header">Connecting to Dream...</div>
+<div class="glass-ui">
+    <div id="status" style="margin-top:25px; letter-spacing: 8px; font-size: 12px; opacity: 0.4;">LO-FI RHYTHM SESSION</div>
     <div class="stage" id="stage"></div>
     <div class="timeline">
         <div id="seeker"></div>
     </div>
-    <button id="start-btn">PLAY DREAM</button>
+    <button id="btn-start">START DREAM</button>
 </div>
 
 <script>
-    let audioCtx, startTime, interval;
+    let audioCtx, startTime;
     let phase = 'call';
-    let pattern = [0.25, 0.5, 0.75]; 
-    let activeItems = [];
-    const duration = 3200; // Etwas langsamer für Lo-Fi Feeling
+    // Rhythmus: Viertel, Achtel und Sechzehntel Mix
+    let pattern = [0, 0.25, 0.5, 0.625, 0.75, 0.875]; 
+    let activePhotos = [];
+    const duration = 3200;
 
     // --- AUDIO ENGINE ---
-    function playTone(freq, type, vol, dur) {
+    function playTone(freq, type, vol, dur, delay = 0) {
         const osc = audioCtx.createOscillator();
         const g = audioCtx.createGain();
         osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        g.gain.setValueAtTime(vol, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        g.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + dur);
         osc.connect(g); g.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + dur);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + dur);
     }
 
-    // Melancholische Lo-Fi Akkorde (Piano/E-Piano Style)
-    function playLofiChord(step) {
-        const chords = [
-            [261.63, 329.63, 392.00, 493.88], // Cmaj7
-            [349.23, 440.00, 523.25, 659.25], // Fmaj7
-            [293.66, 349.23, 440.00, 587.33]  // Dm7
-        ];
-        const chord = chords[step % chords.length];
-        chord.forEach(f => playTone(f, 'sine', 0.04, 2.5));
+    // Kamera Shutter Sound (Klick-Klack)
+    function playShutter() {
+        playTone(1600, 'square', 0.03, 0.02);
+        playTone(800, 'square', 0.02, 0.02, 0.03);
     }
 
-    function playLighter() { playTone(1500, 'square', 0.02, 0.05); } // Klick
-    function playFire() { // Rauschen für die Flamme
+    // Feuerzeug & Verbrennen
+    function playBurnSound() {
         const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
         const data = buf.getChannelData(0);
         for(let i=0; i<data.length; i++) data[i] = Math.random() * 2 - 1;
-        const src = audioCtx.createBufferSource();
-        src.buffer = buf;
-        const lowpass = audioCtx.createBiquadFilter();
-        lowpass.type = 'lowpass'; lowpass.frequency.value = 600;
+        const src = audioCtx.createBufferSource(); src.buffer = buf;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass'; filter.frequency.value = 700;
         const g = audioCtx.createGain();
-        g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.1, audioCtx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-        src.connect(lowpass); lowpass.connect(g); g.connect(audioCtx.destination);
+        src.connect(filter); filter.connect(g); g.connect(audioCtx.destination);
         src.start();
+        playTone(2000, 'square', 0.02, 0.05); // Lighter Click
     }
 
-    // --- GAME LOGIC ---
-    function spawnStage() {
+    // Lo-Fi Hintergrundmusik (Akkorde & Melodie)
+    function playMusicLoop() {
+        // Weiche Lo-Fi Akkorde
+        const chords = [[261, 329, 392], [349, 440, 523]];
+        const now = audioCtx.currentTime;
+        chords[Math.floor(now/3)%2].forEach(f => playTone(f, 'sine', 0.05, 3));
+        
+        // Sanfter Beat
+        for(let i=0; i<4; i++) {
+            playTone(60, 'sine', 0.1, 0.3, i * 0.8); // Kick
+        }
+    }
+
+    function spawnPhotos() {
         const stage = document.getElementById('stage');
         stage.innerHTML = "";
-        activeItems = [];
-        pattern.forEach(p => {
-            const pol = document.createElement('div');
-            pol.className = 'polaroid';
-            pol.style.left = `calc(${(p * 100)}% - 65px)`;
-            pol.innerHTML = `<div class="polaroid-inner"></div>`;
-            stage.appendChild(pol);
-            activeItems.push(pol);
+        activePhotos = [];
+        pattern.forEach((p, i) => {
+            const div = document.createElement('div');
+            div.className = 'polaroid';
+            div.style.left = `calc(${(p * 90) + 5}% - 60px)`;
+            div.style.top = `${200 + (Math.sin(i) * 50)}px`;
+            div.innerHTML = `<div class="polaroid-inner"></div>`;
+            stage.appendChild(div);
+            activePhotos.push(div);
         });
     }
 
-    function mainLoop() {
+    function gameLoop() {
         const elapsed = (performance.now() - startTime) % duration;
         const progress = elapsed / duration;
         document.getElementById('seeker').style.left = (progress * 100) + "%";
 
-        // Takt-Events (Musik & Phasen)
-        const currentBeat = Math.floor(progress * 4);
-        if(this.lastBeat !== currentBeat) {
-            if(currentBeat === 0) playLofiChord(Math.floor(Date.now()/duration));
-            playTone(60, 'sine', 0.15, 0.4); // Sanfter Bass-Kick
-            this.lastBeat = currentBeat;
-        }
-
-        if(progress < 0.02 && !this.locked) {
+        if(progress < 0.01 && !this.locked) {
             this.locked = true;
             if(phase === 'call') {
                 phase = 'response';
-                document.getElementById('status').innerText = "Dein Echo";
-                activeItems.forEach(p => p.classList.remove('ignite'));
+                document.getElementById('status').innerText = "YOUR TURN";
+                activePhotos.forEach(p => p.classList.remove('burn'));
             } else {
                 phase = 'call';
-                document.getElementById('status').innerText = "Hör zu";
-                pattern = Array.from({length: 3}, () => 0.15 + Math.random() * 0.7).sort();
-                spawnStage();
+                document.getElementById('status').innerText = "LISTEN";
+                playMusicLoop();
+                spawnPhotos();
             }
         }
         if(progress > 0.05) this.locked = false;
 
         if(phase === 'call') {
             pattern.forEach((p, i) => {
-                if(Math.abs(progress - p) < 0.01 && !activeItems[i].dataset.seen) {
-                    activeItems[i].style.transform = `scale(1) rotate(${(Math.random()*10-5)}deg)`;
-                    playLighter();
-                    activeItems[i].dataset.seen = "true";
+                if(Math.abs(progress - p) < 0.008 && !activePhotos[i].dataset.hit) {
+                    activePhotos[i].style.transform = `scale(1) rotate(${(Math.random()*12-6)}deg)`;
+                    playShutter();
+                    activePhotos[i].dataset.hit = "true";
                 }
             });
         }
-        requestAnimationFrame(mainLoop);
+        requestAnimationFrame(gameLoop);
     }
 
     window.addEventListener('keydown', (e) => {
         if(e.code === 'Space' && phase === 'response') {
             const progress = ((performance.now() - startTime) % duration) / duration;
             pattern.forEach((p, i) => {
-                if(Math.abs(progress - p) < 0.07) {
-                    if(!activeItems[i].classList.contains('ignite')) {
-                        activeItems[i].classList.add('ignite');
-                        playLighter(); playFire();
-                    }
+                if(Math.abs(progress - p) < 0.06 && !activePhotos[i].classList.contains('burn')) {
+                    activePhotos[i].classList.add('burn');
+                    playBurnSound();
                 }
             });
         }
     });
 
-    document.getElementById('start-btn').onclick = function() {
-        audioCtx = new AudioContext();
+    document.getElementById('btn-start').onclick = function() {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         this.style.display = 'none';
         startTime = performance.now();
-        spawnStage();
-        mainLoop();
+        spawnPhotos();
+        gameLoop();
     };
 </script>
 </body>
