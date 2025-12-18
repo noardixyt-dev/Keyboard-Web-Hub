@@ -2,184 +2,182 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Melatonin Lite | Rhythm Mini-Game</title>
+    <title>AULA | Dream Rhythm</title>
     <style>
         :root {
-            --bg: linear-gradient(135deg, #1a1c2c 0%, #4a1942 100%);
-            --glass: rgba(255, 255, 255, 0.05);
-            --accent: #00f2ff;
-            --perfect: #00ff88;
+            --pink: #ffb7ce;
+            --blue: #a2d2ff;
+            --glass: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.2);
         }
+
         body {
-            margin: 0; padding: 0; overflow: hidden;
-            background: var(--bg);
+            margin: 0; padding: 0; height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #1c1c2b 0%, #3e2f4d 50%, #2b1c2b 100%);
             font-family: 'Segoe UI', sans-serif;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; color: white;
+            color: white; overflow: hidden;
         }
-        #game-container {
-            position: relative;
-            width: 600px; height: 400px;
+
+        /* Matte Glass Interface */
+        .game-panel {
             background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 30px;
-            overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            width: 500px;
+            position: relative;
         }
-        /* The "Target" Zone */
-        #target-circle {
-            width: 80px; height: 80px;
-            border: 4px solid rgba(255,255,255,0.2);
+
+        .visualizer {
+            display: flex; justify-content: center; gap: 15px; margin: 40px 0; height: 60px;
+        }
+
+        .beat-dot {
+            width: 20px; height: 20px;
+            background: rgba(255,255,255,0.1);
             border-radius: 50%;
-            position: absolute;
-            z-index: 2;
+            transition: 0.2s;
         }
-        .note {
-            width: 40px; height: 40px;
-            background: var(--accent);
-            border-radius: 12px;
-            position: absolute;
-            filter: drop-shadow(0 0 10px var(--accent));
+
+        .beat-dot.active-call { background: var(--pink); transform: scale(1.5); box-shadow: 0 0 20px var(--pink); }
+        .beat-dot.active-response { background: var(--blue); transform: scale(1.5); box-shadow: 0 0 20px var(--blue); }
+
+        .phase-label {
+            font-size: 24px; font-weight: 200; letter-spacing: 5px; text-transform: uppercase;
+            margin-bottom: 10px; height: 30px;
         }
-        #score-panel {
-            position: absolute; top: 20px; font-size: 24px; font-weight: bold;
-            letter-spacing: 2px;
-        }
+
         #feedback {
-            position: absolute; bottom: 50px; font-size: 32px; font-weight: 800;
-            text-transform: uppercase; opacity: 0; transform: translateY(20px);
+            font-size: 18px; color: var(--blue); height: 20px; margin-top: 20px; font-weight: bold;
         }
-        .animate-feedback { animation: pop 0.4s ease-out; }
-        @keyframes pop {
-            0% { opacity: 0; transform: translateY(20px); }
-            50% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-10); }
+
+        .btn-start {
+            background: white; color: #1c1c2b; border: none; padding: 15px 40px;
+            border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 16px;
+            transition: 0.3s;
         }
-        .start-screen {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.8);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 10; border-radius: 30px;
-        }
-        button {
-            padding: 15px 40px; font-size: 18px; border: none; border-radius: 50px;
-            background: var(--accent); cursor: pointer; font-weight: bold;
+        .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.4); }
+
+        /* Floating background elements */
+        .bubble {
+            position: absolute; width: 200px; height: 200px;
+            background: var(--pink); filter: blur(80px); opacity: 0.2; z-index: -1;
+            animation: float 10s infinite alternate;
         }
     </style>
 </head>
 <body>
 
-    <div id="score-panel">SCORE: <span id="score">0</span></div>
+    <div class="bubble" style="top: 10%; left: 10%;"></div>
+    <div class="bubble" style="bottom: 10%; right: 10%; background: var(--blue);"></div>
 
-    <div id="game-container">
-        <div id="target-circle"></div>
-        <div id="feedback">PERFECT!</div>
+    <div class="game-panel">
+        <div class="phase-label" id="phase">Ready?</div>
         
-        <div class="start-screen" id="start-screen">
-            <h2 style="margin-bottom:20px">LO-FI RHYTHM</h2>
-            <p style="margin-bottom:30px; opacity:0.7">Hit SPACE when the block hits the center!</p>
-            <button onclick="startGame()">START DREAMING</button>
+        <div class="visualizer" id="dots">
+            <div class="beat-dot"></div>
+            <div class="beat-dot"></div>
+            <div class="beat-dot"></div>
+            <div class="beat-dot"></div>
         </div>
+
+        <button class="btn-start" id="startBtn">START SEQUENCE</button>
+        <div id="feedback"></div>
+        
+        <p style="margin-top: 30px; font-size: 12px; opacity: 0.5;">LISTEN TO THE PINK DOTS, THEN PRESS SPACE ON THE BLUE ONES</p>
     </div>
 
-    <script>
-        const container = document.getElementById('game-container');
-        const feedback = document.getElementById('feedback');
-        const scoreEl = document.getElementById('score');
-        const startScreen = document.getElementById('start-screen');
+<script>
+    const dots = document.querySelectorAll('.beat-dot');
+    const phaseLabel = document.getElementById('phase');
+    const startBtn = document.getElementById('startBtn');
+    const feedback = document.getElementById('feedback');
+    
+    let sequence = [true, false, true, true]; // The "Call" (pattern)
+    let userSequence = [];
+    let isListening = false;
+    const bpm = 500; // Speed of beats
+
+    async function playSequence() {
+        startBtn.style.display = 'none';
+        feedback.innerText = "";
         
-        let score = 0;
-        let activeNotes = [];
-        let gameRunning = false;
-        let bpm = 110; // Lo-fi tempo
-        let spawnInterval = (60 / bpm) * 1000 * 2; // Every 2 beats
-
-        function startGame() {
-            startScreen.style.display = 'none';
-            gameRunning = true;
-            score = 0;
-            scoreEl.innerText = score;
-            spawnNoteLoop();
-            requestAnimationFrame(update);
-        }
-
-        function spawnNoteLoop() {
-            if (!gameRunning) return;
-            createNote();
-            setTimeout(spawnNoteLoop, spawnInterval);
-        }
-
-        function createNote() {
-            const note = document.createElement('div');
-            note.className = 'note';
-            // Spawn from the right
-            note.style.right = '-50px';
-            note.x = 650;
-            container.appendChild(note);
-            activeNotes.push(note);
-        }
-
-        function update() {
-            if (!gameRunning) return;
-
-            activeNotes.forEach((note, index) => {
-                note.x -= 4; // Movement speed
-                note.style.left = note.x + 'px';
-
-                // Remove if off screen
-                if (note.x < -50) {
-                    note.remove();
-                    activeNotes.splice(index, 1);
-                }
-            });
-
-            requestAnimationFrame(update);
-        }
-
-        function checkHit() {
-            if (!gameRunning) return;
-
-            // Target center is roughly 300px (600/2)
-            const targetX = 300 - 20; // Adjust for note width
-            let hitFound = false;
-
-            activeNotes.forEach((note, index) => {
-                const diff = Math.abs(note.x - targetX);
-
-                if (diff < 50) { // Hit window
-                    hitFound = true;
-                    if (diff < 15) {
-                        showFeedback("PERFECT!", "#00ff88");
-                        score += 100;
-                    } else {
-                        showFeedback("GOOD", "#00f2ff");
-                        score += 50;
-                    }
-                    note.remove();
-                    activeNotes.splice(index, 1);
-                }
-            });
-
-            if (!hitFound) showFeedback("MISS", "#ff4b2b");
-            scoreEl.innerText = score;
-        }
-
-        function showFeedback(text, color) {
-            feedback.innerText = text;
-            feedback.style.color = color;
-            feedback.classList.remove('animate-feedback');
-            void feedback.offsetWidth; // Trigger reflow
-            feedback.classList.add('animate-feedback');
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                checkHit();
+        // 1. THE CALL
+        phaseLabel.innerText = "Listen...";
+        for(let i=0; i < sequence.length; i++) {
+            await wait(bpm);
+            if(sequence[i]) {
+                dots[i].classList.add('active-call');
+                // Imagine a soft lo-fi kick sound here
+                setTimeout(() => dots[i].classList.remove('active-call'), 200);
             }
-        });
+        }
 
-        container.addEventListener('mousedown', checkHit);
-    </script>
+        await wait(bpm);
+
+        // 2. THE RESPONSE
+        phaseLabel.innerText = "Your Turn!";
+        phaseLabel.style.color = "var(--blue)";
+        isListening = true;
+        userSequence = [];
+
+        for(let i=0; i < sequence.length; i++) {
+            dots[i].classList.add('active-response');
+            let startTime = Date.now();
+            let hit = false;
+
+            // Wait for user to press Space during this dot's window
+            while(Date.now() - startTime < bpm) {
+                if(keyPressed) {
+                    hit = true;
+                    keyPressed = false;
+                }
+                await wait(10);
+            }
+            
+            userSequence.push(hit);
+            dots[i].classList.remove('active-response');
+        }
+
+        checkResult();
+    }
+
+    let keyPressed = false;
+    window.addEventListener('keydown', (e) => {
+        if(e.code === 'Space' && isListening) {
+            keyPressed = true;
+            // Visual tap feedback
+            feedback.innerText = "TAP!";
+        }
+    });
+
+    function checkResult() {
+        isListening = false;
+        phaseLabel.style.color = "white";
+        const correct = JSON.stringify(sequence) === JSON.stringify(userSequence);
+        
+        if(correct) {
+            phaseLabel.innerText = "Perfect Harmony";
+            feedback.innerText = "✨ Clean Rhythm ✨";
+        } else {
+            phaseLabel.innerText = "Out of Sync";
+            feedback.innerText = "Try again...";
+        }
+        
+        startBtn.style.display = 'inline-block';
+        startBtn.innerText = "RETRY";
+        // Generate a new random sequence for next time
+        sequence = Array.from({length: 4}, () => Math.random() > 0.4);
+    }
+
+    function wait(ms) { return new Promise(res => setTimeout(res, ms)); }
+    startBtn.onclick = playSequence;
+
+</script>
 </body>
 </html>
