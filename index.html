@@ -2,103 +2,112 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Melatonin | Lo-Fi Rhythm</title>
+    <title>Melatonin | 1:1 Reconstruction</title>
     <style>
         :root {
-            --bg: #161625;
-            --photo-glow: #ffcc33;
-            --fire-red: #ff4500;
+            --bg: #1a1a2e;
+            --fire: #ff6d24;
+            --glow: #ffcf40;
+            --photo-accent: #ffb7ce;
         }
 
         body, html {
             margin: 0; padding: 0; height: 100%;
-            background: var(--bg); font-family: 'Segoe UI', sans-serif;
+            background: var(--bg); font-family: 'Inter', sans-serif;
             overflow: hidden; display: flex; align-items: center; justify-content: center;
         }
 
-        /* Sanfter Hintergrund-Verlauf */
-        #canvas-bg {
-            position: fixed; inset: 0; z-index: -1;
-            background: radial-gradient(circle at 50% 120%, #2d2d44 0%, #161625 100%);
-        }
-
-        .game-window {
+        /* Spielwelt */
+        .world {
             width: 1000px; height: 600px;
             background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(30px);
-            border-radius: 50px; border: 1px solid rgba(255,255,255,0.05);
+            backdrop-filter: blur(40px);
+            border-radius: 50px; border: 1px solid rgba(255,255,255,0.08);
             position: relative; overflow: hidden;
         }
 
+        /* Die Leine */
         .rope {
-            position: absolute; top: 180px; width: 100%; height: 2px;
-            background: rgba(255,255,255,0.1);
+            position: absolute; top: 160px; width: 100%; height: 2px;
+            background: rgba(255,255,255,0.1); z-index: 1;
         }
 
-        /* Das Melatonin-Foto */
+        /* Das Foto */
         .photo {
-            position: absolute; top: 180px; width: 130px; height: 190px;
-            background: #fff; padding: 8px; padding-bottom: 30px;
-            box-shadow: 0 15px 45px rgba(0,0,0,0.4);
+            position: absolute; top: 160px; height: 180px;
+            background: #fff; padding: 8px; padding-bottom: 25px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             transform-origin: top center;
+            z-index: 5;
             display: none;
+            /* Der Burn-Effekt von unten nach oben */
+            -webkit-mask-image: linear-gradient(to top, transparent var(--burn), black var(--burn));
+            mask-image: linear-gradient(to top, transparent var(--burn), black var(--burn));
+            --burn: 0%;
         }
 
-        .photo-content {
+        .photo-inner {
             width: 100%; height: 100%;
-            background: linear-gradient(135deg, #ffcfd2 0%, #b3e5fc 100%);
-            position: relative; overflow: hidden;
+            background: linear-gradient(135deg, #a2d2ff, var(--photo-accent));
         }
 
-        /* Brand-Effekt */
-        .burn-mark {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            background: #1a1a1a; height: 0%; 
-            border-top: 3px solid var(--photo-glow);
-            filter: drop-shadow(0 0 5px var(--fire-red));
+        /* Glühende Kante beim Brennen */
+        .photo.burning::after {
+            content: ''; position: absolute; bottom: var(--burn); left: 0;
+            width: 100%; height: 12px; background: var(--glow);
+            filter: blur(6px); box-shadow: 0 0 20px var(--fire);
         }
 
-        /* Zippo */
+        /* Mechanisches Feuerzeug */
         .zippo {
-            position: absolute; bottom: 70px; left: 50%;
+            position: absolute; bottom: 60px; left: 50%;
             transform: translateX(-50%); width: 80px; height: 120px;
             z-index: 100;
         }
 
-        .zippo-body { position: absolute; bottom: 0; width: 100%; height: 75px; background: #3c3c3c; border-radius: 4px; }
+        .zippo-body { position: absolute; bottom: 0; width: 100%; height: 75px; background: #333; border-radius: 4px; }
         .zippo-lid {
-            position: absolute; bottom: 75px; width: 100%; height: 35px; background: #4a4a4a;
+            position: absolute; bottom: 75px; width: 100%; height: 35px; background: #444;
             border-radius: 4px 4px 0 0; transform-origin: left bottom;
-            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .open .zippo-lid { transform: rotate(-110deg) translateX(-8px); }
+        .zippo.open .zippo-lid { transform: rotate(-120deg) translateX(-5px); }
+
         .flame {
             position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-            width: 22px; height: 45px; background: var(--fire-red);
-            border-radius: 50% 50% 20% 20%; filter: blur(3px);
-            opacity: 0; box-shadow: 0 0 25px var(--fire-red);
+            width: 24px; height: 50px; background: var(--fire);
+            border-radius: 50% 50% 20% 20%; filter: blur(4px);
+            opacity: 0; box-shadow: 0 0 30px var(--fire);
         }
-        .open .flame { opacity: 1; animation: flicker 0.1s infinite; }
-        @keyframes flicker { 50% { transform: translateX(-50%) scale(1.1) rotate(1deg); } }
+        .zippo.open .flame { opacity: 1; animation: flicker 0.1s infinite; }
+        @keyframes flicker { 50% { transform: translateX(-50%) scale(1.1); } }
 
-        #ui-layer {
+        /* UI */
+        #ui {
             position: absolute; top: 30px; width: 100%; text-align: center;
-            color: white; font-weight: 200; letter-spacing: 6px; text-transform: uppercase;
+            color: white; letter-spacing: 10px; opacity: 0.3; font-weight: 100;
         }
 
-        #start-btn {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            padding: 20px 60px; border-radius: 100px; border: none; cursor: pointer;
-            font-weight: bold; font-size: 1.2rem; background: #fff; z-index: 200;
+        #start-screen {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.8);
+            z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        button {
+            padding: 15px 50px; font-size: 18px; border-radius: 50px;
+            border: none; cursor: pointer; font-weight: bold; background: #fff;
         }
     </style>
 </head>
 <body>
 
-<div id="canvas-bg"></div>
-<div class="game-window">
-    <div id="ui-layer">Listen</div>
-    <button id="start-btn">Dream Start</button>
+<div class="world">
+    <div id="ui">LISTEN</div>
+    <div id="start-screen">
+        <h1 style="color:white; letter-spacing: 15px;">MELATONIN</h1>
+        <button id="start-btn">START DREAM</button>
+    </div>
+    
     <div class="rope"></div>
     <div id="stage"></div>
 
@@ -114,14 +123,12 @@
     let photos = [];
     const bpm = 92;
     const beat = 60000 / bpm;
-    const loopLen = beat * 8;
+    const loop = beat * 8;
 
-    // --- SOUNDS ---
-    function playPiano(freq, dur, vol = 0.05) {
+    function playNote(freq, vol, dur, type='sine') {
         const o = audioCtx.createOscillator();
         const g = audioCtx.createGain();
-        o.type = 'sine';
-        o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
         g.gain.setValueAtTime(vol, audioCtx.currentTime);
         g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
         o.connect(g); g.connect(audioCtx.destination);
@@ -129,93 +136,85 @@
     }
 
     function playShutter() {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.type = 'square';
-        o.frequency.setValueAtTime(1400, audioCtx.currentTime);
-        g.gain.setValueAtTime(0.02, audioCtx.currentTime);
-        g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
-        o.connect(g); g.connect(audioCtx.destination);
-        o.start(); o.stop(audioCtx.currentTime + 0.05);
+        playNote(1600, 0.02, 0.05, 'square'); // Click
+        setTimeout(() => playNote(800, 0.01, 0.03, 'sine'), 30); // Mech
     }
 
-    // --- GAME ENGINE ---
     function spawn() {
         const stage = document.getElementById('stage');
         stage.innerHTML = "";
         photos = [];
-        // Pattern: Viertel, Viertel, Lang (2 Schläge)
-        const pattern = [{ t: 2, w: 120 }, { t: 3, w: 120 }, { t: 5, w: 350 }];
+        // Pattern: Hit, Hit, Long Note
+        const pattern = [
+            { t: 2, w: 110, len: 1 }, 
+            { t: 3, w: 110, len: 1 }, 
+            { t: 5, w: 350, len: 3 }
+        ];
 
         pattern.forEach(p => {
             const el = document.createElement('div');
             el.className = 'photo';
             el.style.width = p.w + "px";
-            el.innerHTML = `<div class="photo-content"><div class="burn-mark"></div></div>`;
+            el.innerHTML = '<div class="photo-inner"></div>';
             stage.appendChild(el);
-            photos.push({ el, t: p.t, w: p.w, burnt: 0, done: false });
+            photos.push({ el, t: p.t, w: p.w, burnt: 0, triggered: false });
         });
     }
 
-    function gameLoop() {
+    function loopEngine() {
         const now = performance.now();
-        const elapsed = (now - startTime) % loopLen;
+        const elapsed = (now - startTime) % loop;
         const curBeat = elapsed / beat;
 
-        document.getElementById('ui-layer').innerText = phase === 'call' ? "Listen" : "Your Turn";
+        document.getElementById('ui').innerText = phase === 'call' ? "LISTEN" : "YOUR TURN";
 
         photos.forEach(p => {
-            const x = 500 + (p.t - curBeat) * 300; // Speed
+            const x = 500 + (p.t - curBeat) * 280; // Speed
             p.el.style.left = x + "px";
             p.el.style.display = 'block';
 
-            // Call Phase: Kamera Sound
-            if (phase === 'call' && Math.abs(curBeat - p.t) < 0.05 && !p.done) {
+            // Call Phase: Timing Guide
+            if (phase === 'call' && Math.abs(curBeat - p.t) < 0.08 && !p.triggered) {
                 playShutter();
-                p.el.style.transform = "scale(1.05)";
+                p.el.style.transform = "scale(1.08)";
                 setTimeout(() => p.el.style.transform = "scale(1)", 100);
-                p.done = true;
+                p.triggered = true;
             }
 
-            // Response Phase: Verbrennen
+            // Response Phase: Actual Burning
             if (phase === 'response') {
                 const rect = p.el.getBoundingClientRect();
-                const mid = window.innerWidth / 2;
-                if (isSpace && mid >= rect.left && mid <= rect.right) {
-                    p.burnt = Math.min(100, p.burnt + 1.2);
-                    p.el.querySelector('.burn-mark').style.height = p.burnt + "%";
+                const center = window.innerWidth / 2;
+                if (isSpace && center >= rect.left && center <= rect.right) {
+                    p.el.classList.add('burning');
+                    p.burnt = Math.min(100, p.burnt + 1.8);
+                    p.el.style.setProperty('--burn', p.burnt + "%");
+                } else {
+                    p.el.classList.remove('burning');
                 }
             }
         });
 
-        // Loop Switcher
-        if (curBeat > 7.8 && !this.waiting) {
+        if (curBeat > 7.9 && !this.waiting) {
             this.waiting = true;
             setTimeout(() => {
                 phase = phase === 'call' ? 'response' : 'call';
-                if (phase === 'call') playMusic();
+                if(phase === 'call') {
+                    // Lo-Fi Piano Harmony
+                    [261, 329, 392].forEach(f => playNote(f, 0.03, 3)); 
+                }
                 spawn();
                 this.waiting = false;
-            }, 200);
+            }, 100);
         }
-
-        requestAnimationFrame(gameLoop);
-    }
-
-    function playMusic() {
-        // Schöne LoFi Piano Akkorde (kein Bass!)
-        const chord = [261.63, 329.63, 392.00]; // C-Dur soft
-        chord.forEach(f => playPiano(f, 3, 0.03));
-        setTimeout(() => {
-            [349.23, 440.00, 523.25].forEach(f => playPiano(f, 3, 0.03)); // F-Dur
-        }, beat * 4);
+        requestAnimationFrame(loopEngine);
     }
 
     window.onkeydown = (e) => {
         if (e.code === 'Space' && !isSpace) {
             isSpace = true;
             document.getElementById('zippo').classList.add('open');
-            playPiano(1200, 0.05, 0.02); // Mechanischer Klick
+            playNote(1400, 0.04, 0.05, 'square'); // Zippo Click
         }
     };
     window.onkeyup = (e) => {
@@ -226,12 +225,11 @@
     };
 
     document.getElementById('start-btn').onclick = function() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        this.style.display = 'none';
+        audioCtx = new AudioContext();
+        document.getElementById('start-screen').style.display = 'none';
         startTime = performance.now();
-        playMusic();
         spawn();
-        gameLoop();
+        loopEngine();
     };
 </script>
 </body>
