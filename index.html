@@ -2,14 +2,13 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>AULA | Rhythm Master</title>
+    <title>Melatonin | Soft Echo</title>
     <style>
         :root {
-            --bg: #0d0d12;
+            --bg: #1a1a25;
             --accent: #ffb7ce;
             --player: #a2d2ff;
-            --error: #ff4b2b;
-            --glass: rgba(255, 255, 255, 0.03);
+            --glass: rgba(255, 255, 255, 0.05);
         }
 
         body {
@@ -20,103 +19,82 @@
         }
 
         .container {
-            width: 850px; padding: 50px;
+            width: 800px; padding: 50px;
             background: var(--glass);
-            backdrop-filter: blur(50px);
+            backdrop-filter: blur(40px);
             border-radius: 40px;
-            border: 1px solid rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
             text-align: center;
-            box-shadow: 0 40px 120px rgba(0,0,0,0.8);
         }
 
         .timeline-container {
             position: relative;
-            width: 100%; height: 120px;
+            width: 100%; height: 100px;
             background: rgba(255,255,255,0.02);
-            border-radius: 25px;
+            border-radius: 20px;
             margin: 40px 0;
             display: flex; align-items: center;
             border: 1px solid rgba(255,255,255,0.05);
-            overflow: hidden;
         }
 
         #seeker {
             position: absolute;
-            left: 0; width: 6px; height: 100%;
-            background: linear-gradient(to bottom, transparent, white, transparent);
-            box-shadow: 0 0 25px white;
+            left: 0; width: 4px; height: 100%;
+            background: white;
+            box-shadow: 0 0 20px white;
             z-index: 10;
         }
 
         .note {
             position: absolute;
-            width: 45px; height: 45px;
-            border-radius: 14px;
+            width: 40px; height: 40px;
+            border-radius: 12px;
             background: rgba(255,255,255,0.05);
             border: 2px solid var(--accent);
             transform: translateX(-50%);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s ease;
         }
 
-        .note.hit { background: var(--accent); box-shadow: 0 0 40px var(--accent); transform: translateX(-50%) scale(1.15); }
-        .note.success { border-color: var(--player); background: var(--player); box-shadow: 0 0 40px var(--player); }
-        .note.fail { border-color: var(--error); background: var(--error); box-shadow: 0 0 40px var(--error); }
+        .note.hit { background: var(--accent); box-shadow: 0 0 30px var(--accent); }
+        .note.success { border-color: var(--player); background: var(--player); box-shadow: 0 0 30px var(--player); }
+        .note.off-key { border-color: #b19cd9; background: rgba(177, 156, 217, 0.5); }
 
-        .status { font-size: 28px; font-weight: 100; letter-spacing: 12px; text-transform: uppercase; margin-bottom: 20px; color: var(--accent); }
+        .status { font-size: 22px; font-weight: 200; letter-spacing: 8px; text-transform: uppercase; color: var(--accent); }
         
         button {
-            background: white; color: black; border: none; padding: 22px 60px;
-            border-radius: 100px; font-weight: 900; cursor: pointer;
-            font-size: 18px; transition: 0.4s;
+            background: white; color: #1a1a25; border: none; padding: 18px 50px;
+            border-radius: 100px; font-weight: 800; cursor: pointer; transition: 0.3s;
         }
-        button:hover { transform: scale(1.05); box-shadow: 0 0 30px var(--player); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="status" id="status-text">Traum beginnt...</div>
-    
+    <div class="status" id="status-text">Traumsequenz</div>
     <div class="timeline-container" id="timeline">
         <div id="seeker"></div>
     </div>
-
-    <button id="start-btn">VERBINDEN</button>
-    <div id="feedback" style="margin-top: 25px; font-weight: bold; font-size: 20px;"></div>
+    <button id="start-btn">STARTEN</button>
+    <div id="feedback" style="margin-top: 20px; opacity: 0.6;"></div>
 </div>
 
 <script>
-    let audioCtx, startTime, seeker, timeline, statusText, feedback;
-    let isPlaying = false;
+    let audioCtx, startTime, seeker, timeline, statusText;
     let phase = 'call'; 
-    let pattern = [0.2, 0.4, 0.7]; 
+    let pattern = [0.2, 0.5, 0.8]; 
     let userHits = [];
-    const duration = 2800; 
+    const duration = 3000; 
 
-    seeker = document.getElementById('seeker');
-    timeline = document.getElementById('timeline');
-    statusText = document.getElementById('status-text');
-    feedback = document.getElementById('feedback');
-
-    function createOsc(freq, type, dur, vol = 0.1) {
+    function createSoftSound(freq, vol = 0.15, dur = 0.4) {
         if(!audioCtx) return;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = type;
+        osc.type = 'sine'; // Weiche Sinuswelle
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + dur);
-    }
-
-    function generatePattern() {
-        const count = 2 + Math.floor(Math.random() * 3); // 2 bis 4 Noten
-        const newPattern = [];
-        for(let i=0; i<count; i++) {
-            newPattern.push(0.15 + (i * 0.2) + Math.random() * 0.15);
-        }
-        return newPattern;
     }
 
     function spawnNotes() {
@@ -131,25 +109,36 @@
 
     function gameLoop() {
         const now = performance.now();
-        const elapsed = (now - startTime) % duration;
-        const progress = elapsed / duration;
-
+        const progress = ((now - startTime) % duration) / duration;
         seeker.style.left = (progress * 100) + "%";
 
-        // Takt-Ende erreicht
-        if (progress < 0.015 && !this.locked) {
+        if (progress < 0.01 && !this.locked) {
             this.locked = true;
-            handlePhaseSwitch();
+            if (phase === 'call') {
+                phase = 'response';
+                statusText.innerText = "Dein Echo";
+                userHits = [];
+                document.querySelectorAll('.note').forEach(n => n.classList.remove('hit'));
+            } else {
+                if (userHits.length < pattern.length) {
+                    document.getElementById('feedback').innerText = "Rhythmus wiederholen...";
+                } else {
+                    pattern = Array.from({length: 3}, () => 0.15 + Math.random() * 0.7);
+                    document.getElementById('feedback').innerText = "Nächster Level";
+                }
+                phase = 'call';
+                statusText.innerText = "Hör zu";
+                spawnNotes();
+            }
         }
         if (progress > 0.05) this.locked = false;
 
-        // Call Phase Sound Logic
         if (phase === 'call') {
             const notes = document.querySelectorAll('.note');
             pattern.forEach((p, i) => {
                 if (Math.abs(progress - p) < 0.008 && !notes[i].dataset.played) {
                     notes[i].classList.add('hit');
-                    createOsc(523.25, 'triangle', 0.25, 0.15); // C5
+                    createSoftSound(440); // A4
                     notes[i].dataset.played = "true";
                     setTimeout(() => notes[i].dataset.played = "", 500);
                 }
@@ -158,75 +147,39 @@
         requestAnimationFrame(gameLoop);
     }
 
-    function handlePhaseSwitch() {
-        if (phase === 'call') {
-            phase = 'response';
-            statusText.innerText = "Dein Echo";
-            statusText.style.color = "var(--player)";
-            userHits = [];
-            document.querySelectorAll('.note').forEach(n => n.classList.remove('hit'));
-        } else {
-            const win = checkScore();
-            if (win) {
-                pattern = generatePattern();
-                feedback.innerText = "Traum gemeistert! ✨";
-                feedback.style.color = "var(--player)";
-            } else {
-                feedback.innerText = "Wiederhole den Traum... 🌙";
-                feedback.style.color = "var(--error)";
-            }
-            phase = 'call';
-            statusText.innerText = "Hör zu";
-            statusText.style.color = "var(--accent)";
-            spawnNotes();
-        }
-    }
-
-    function checkScore() {
-        // Erfolg wenn alle Noten im Pattern mindestens einmal in der Nähe getroffen wurden
-        return pattern.length > 0 && userHits.length === pattern.length;
-    }
-
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Space' && phase === 'response') {
             const now = performance.now();
             const progress = ((now - startTime) % duration) / duration;
-            
-            let found = false;
+            let hitFound = false;
+
             pattern.forEach((p, i) => {
                 const diff = Math.abs(progress - p);
                 const notes = document.querySelectorAll('.note');
 
-                if (diff < 0.04) { // Perfektes Timing
-                    if (!notes[i].classList.contains('success')) {
-                        notes[i].classList.add('success');
-                        createOsc(329.63, 'triangle', 0.3, 0.2); // E4 (Harmonisch)
-                        userHits.push(i);
-                        found = true;
-                    }
-                } else if (diff < 0.12) { // Schlechtes Timing (Dissonant)
-                    notes[i].classList.add('fail');
-                    createOsc(311.13, 'sawtooth', 0.4, 0.1); // Eb4 (Dissonanter Halbton!)
-                    found = true; 
+                if (diff < 0.05) { // Perfekt
+                    notes[i].classList.add('success');
+                    createSoftSound(440, 0.2); // A4
+                    userHits.push(i);
+                    hitFound = true;
+                } else if (diff < 0.15) { // Leicht daneben
+                    notes[i].classList.add('off-key');
+                    // Spielt einen Halbton tiefer (Ab4 / 415.30Hz)
+                    createSoftSound(415.30, 0.1); 
+                    hitFound = true;
                 }
             });
-
-            if (!found) {
-                // Komplett daneben
-                createOsc(150, 'sine', 0.2, 0.2); 
-            }
         }
     });
 
     document.getElementById('start-btn').onclick = function() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioCtx = new AudioContext();
         this.style.display = 'none';
-        pattern = generatePattern();
         spawnNotes();
         startTime = performance.now();
         gameLoop();
-        // Bass Beat
-        setInterval(() => createOsc(55, 'sine', 0.15, 0.3), duration / 4); 
+        // Sanfter Hintergrund-Beat
+        setInterval(() => createSoftSound(60, 0.1, 0.5), 1500); 
     };
 </script>
 </body>
