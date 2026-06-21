@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>T3PA Loadcell Pedalweg-Simulator</title>
+    <title>T3PA Loadcell Live Pedalweg-Simulator</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -40,8 +40,8 @@
         }
         .controls-panel {
             flex: 1;
-            min-width: 320px;
-            max-width: 400px;
+            min-width: 340px;
+            max-width: 420px;
         }
         .visual-panel {
             flex: 1.5;
@@ -53,6 +53,13 @@
         .control-group {
             margin-bottom: 20px;
         }
+        .brake-group {
+            background-color: #343442;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ff4500;
+            margin-top: 10px;
+        }
         label {
             display: block;
             margin-bottom: 8px;
@@ -62,6 +69,9 @@
         input[type="range"] {
             width: 100%;
             accent-color: #ff4500;
+        }
+        #pedalForce {
+            accent-color: #00ffcc;
         }
         .value-disp {
             color: #ff4500;
@@ -89,6 +99,11 @@
             font-weight: bold;
             font-size: 1.2rem;
         }
+        .live-travel {
+            color: #ff4500;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
         canvas {
             background-color: #191920;
             border-radius: 8px;
@@ -112,12 +127,14 @@
 </head>
 <body>
 
-    <h1>T3PA Loadcell Pedalweg-Simulator</h1>
-    <p class="subtitle">Simuliere die Hebelwirkung und den Weg deines Drift-/GT-Setups</p>
+    <h1>T3PA Loadcell Live Pedalweg-Simulator</h1>
+    <p class="subtitle">Bewege den Brems-Slider, um den echten Pedalweg beim Drücken zu sehen</p>
 
     <div class="container">
         <!-- CONTROLS PANEL -->
         <div class="panel controls-panel">
+            <h3 style="color: #ff4500; margin-top: 0;">1. Hardware-Parameter</h3>
+            
             <div class="control-group">
                 <label for="pedalLength">Gesamtlänge des Pedalarms (cm):
                     <span id="pedalLengthVal" class="value-disp">18</span>
@@ -133,23 +150,34 @@
             </div>
 
             <div class="control-group">
-                <label for="stackCompression">Weg des Gummi/Feder-Stacks (cm Kompression):
-                    <span id="stackCompressionVal" class="value-disp">0.6</span>
+                <label for="stackCompression">Max. Kompression des Gummis/Feder (cm):
+                    <span id="stackCompressionVal" class="value-disp">0.8</span>
                 </label>
-                <input type="range" id="stackCompression" min="0.2" max="1.5" step="0.1" value="0.6">
+                <input type="range" id="stackCompression" min="0.2" max="2.0" step="0.1" value="0.8">
+            </div>
+
+            <div class="control-group brake-group">
+                <label for="pedalForce" style="color: #00ffcc;">2. PEDAL DRÜCKEN (Simuliere deinen Fuß):
+                    <span id="pedalForceVal" style="color: #00ffcc;" class="value-disp">0 %</span>
+                </label>
+                <input type="range" id="pedalForce" min="0" max="100" step="1" value="0">
             </div>
 
             <div class="results">
                 <div class="result-item">
-                    <span>Hebelverhältnis (Fuß zu Loadcell):</span>
+                    <span>Hebelverhältnis:</span>
                     <span id="ratioResult">3.6 : 1</span>
                 </div>
-                <div class="result-item" style="margin-top: 10px;">
-                    <span>Dein Pedalweg am Fuß (Travel):</span>
-                    <span id="travelResult" class="highlight">2.16 cm</span>
+                <div class="result-item" style="border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 8px;">
+                    <span>Maximal möglicher Pedalweg:</span>
+                    <span id="travelResult" class="highlight">2.88 cm</span>
                 </div>
-                <div class="result-item" style="font-size: 0.85rem; color: #a0a0a5; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
-                    <span id="adviceText">Perfekt fürs Driften! Viel Weg für präzise Gewichtsverlagerung.</span>
+                <div class="result-item" style="margin-top: 5px;">
+                    <span>Aktueller Weg am Fuß (Live):</span>
+                    <span id="liveTravelResult" class="live-travel">0.00 cm</span>
+                </div>
+                <div class="result-item" style="font-size: 0.85rem; color: #a0a0a5; margin-top: 15px; padding-top: 5px;">
+                    <span id="adviceText">Bewege den Brems-Slider...</span>
                 </div>
             </div>
         </div>
@@ -158,108 +186,80 @@
         <div class="panel visual-panel">
             <canvas id="pedalCanvas" width="450" height="400"></canvas>
             <div class="legend">
-                <div class="legend-item"><span style="background: #ff4500;"></span>Pedalarm / Fußplatte</div>
-                <div class="legend-item"><span style="background: #00ffcc;"></span>Loadcell / Elastomer</div>
-                <div class="legend-item"><span style="background: #555566;"></span>Basis Gehäuse</div>
+                <div class="legend-item"><span style="background: #ff4500;"></span>Pedalarm</div>
+                <div class="legend-item"><span style="background: #00ffcc;"></span>Gummi-Stack / Feder</div>
+                <div class="legend-item"><span style="background: #555566;"></span>Gehäuse-Rückwand</div>
             </div>
         </div>
     </div>
 
     <script>
-        // DOM Elemente abgreifen
         const pedalLengthSlider = document.getElementById('pedalLength');
         const loadcellHeightSlider = document.getElementById('loadcellHeight');
         const stackCompressionSlider = document.getElementById('stackCompression');
+        const pedalForceSlider = document.getElementById('pedalForce');
 
         const pedalLengthVal = document.getElementById('pedalLengthVal');
         const loadcellHeightVal = document.getElementById('loadcellHeightVal');
         const stackCompressionVal = document.getElementById('stackCompressionVal');
+        const pedalForceVal = document.getElementById('pedalForceVal');
 
         const ratioResult = document.getElementById('ratioResult');
         const travelResult = document.getElementById('travelResult');
+        const liveTravelResult = document.getElementById('liveTravelResult');
         const adviceText = document.getElementById('adviceText');
 
         const canvas = document.getElementById('pedalCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Animation Variable
-        let animPhase = 0;
-
         function updateSimulation() {
-            // Werte aus den Slidern holen
-            const L = parseFloat(pedalLengthSlider.value);
-            const h = parseFloat(loadcellHeightSlider.value);
-            const c = parseFloat(stackCompressionSlider.value);
+            let L = parseFloat(pedalLengthSlider.value);
+            let h = parseFloat(loadcellHeightSlider.value);
+            let c = parseFloat(stackCompressionSlider.value);
+            let forcePercent = parseFloat(pedalForceSlider.value);
 
-            // Begrenzung: Loadcell-Höhe darf nicht länger als der Hebel sein
-            if (h > L - 2) {
-                loadcellHeightSlider.value = L - 2;
-                return updateSimulation();
+            // Schutzschaltung für Hebelgrenzen
+            if (h >= L) {
+                h = L - 1;
+                loadcellHeightSlider.value = h;
             }
 
-            // Werte in der GUI updaten
+            // Slider-Anzeigen updaten
             pedalLengthVal.innerText = L;
             loadcellHeightVal.innerText = h;
             stackCompressionVal.innerText = c;
+            pedalForceVal.innerText = forcePercent + " %";
 
-            // Berechnung über das Hebelgesetz (Strahlensatz)
-            // Weg am Fuß (T) / Kompression am Stack (c) = Länge Arm (L) / Höhe Loadcell (h)
+            // Berechnungen nach Hebelgesetz
             const ratio = L / h;
-            const pedalTravel = c * ratio;
+            const maxPedalTravel = c * ratio;
+            const currentLiveTravel = maxPedalTravel * (forcePercent / 100);
 
-            // Ergebnisse anzeigen
+            // Textausgaben
             ratioResult.innerText = ratio.toFixed(1) + " : 1";
-            travelResult.innerText = pedalTravel.toFixed(2) + " cm";
+            travelResult.innerText = maxPedalTravel.toFixed(2) + " cm";
+            liveTravelResult.innerText = currentLiveTravel.toFixed(2) + " cm";
 
-            // Fahrempfehlungs-Text dynamisch anpassen
-            if (pedalTravel < 1.0) {
-                adviceText.innerText = "🏎️ F1 / Formel-Setup: Extrem harter, kurzer Weg. Perfekt für reines Muskelgedächtnis, ungeeignet zum Driften.";
+            // Dynamisches Tuning-Feedback für Drift & GT
+            if (maxPedalTravel < 1.1) {
+                adviceText.innerText = "🏎️ Kurzer F1-Weg. Zum Driften extrem unhandlich, da du kaum Gefühl für Gewichtsverlagerung hast.";
                 adviceText.style.color = "#ff6666";
-            } else if (pedalTravel >= 1.0 && pedalTravel <= 2.2) {
-                adviceText.innerText = "🏁 GT3 / Allround-Setup: Optimaler Kompromiss. Genug Weg für No Hesi Trail-Braking und solide Wand beim harten Stoppen.";
+            } else if (maxPedalTravel >= 1.1 && maxPedalTravel <= 2.2) {
+                adviceText.innerText = "🏁 Knackiges GT3/No Hesi Setup. Guter Kompromiss aus spürbarem Pedalweg und schnellem Bremsdruck.";
                 adviceText.style.color = "#00ffcc";
             } else {
-                adviceText.innerText = "🔄 Drift / Street-Setup: Hervorragend! Sehr viel Pedalweg vorhanden. Perfekt, um das Auto sanft anzustellen und das Gewicht zu verlagern.";
+                adviceText.innerText = "🔄 Perfekter Drift-Weg! Durch den langen Hebelweg kannst du das Auto super feinfühlig mit dem Fuß anstellen.";
                 adviceText.style.color = "#66ccff";
             }
 
-            drawPedal(L, h, c, pedalTravel);
+            drawPedal(L, h, c, maxPedalTravel, forcePercent / 100);
         }
 
-        function drawPedal(L, h, c, totalTravel) {
-            // Canvas löschen
+        function drawPedal(L, h, c, totalTravel, pressFactor) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Skalierungsfaktor von cm zu Pixeln (z.B. 1 cm = 15 Pixel)
             const scale = 15;
-
-            // Fixer Drehpunkt (Pivot) des Pedals im Canvas unten links
             const pivotX = 120;
-            const pivotY = 350;
+            const pivotY = 320; 
 
-            // Animierte Bremsbetätigung (Sinus-Welle für flüssiges Drücken und Loslassen)
-            animPhase += 0.04;
-            const currentPressFactor = (Math.sin(animPhase) + 1) / 2; // Wert zwischen 0 und 1
-
-            // Berechne den aktuellen Winkel des Pedals im Ruhezustand (ca. 75 Grad zur Horizontalen)
             const baseAngle = -75 * Math.PI / 180;
-            
-            // Maximaler Auslenkungswinkel basierend auf dem errechneten Travel am oberen Ende
-            // Bogenmaß Annäherung: Winkel = Weg / Länge
             const maxAlpha = (totalTravel / L);
-            const currentAlpha = maxAlpha * currentPressFactor;
-            const currentAngle = baseAngle + currentAlpha;
-
-            // --- 1. GEHÄUSE / PLASTIKBASIS ZEICHNEN ---
-            ctx.strokeStyle = "#555566";
-            ctx.lineWidth = 10;
-            ctx.lineCap = "round";
-            ctx.beginPath();
-            ctx.moveTo(30, pivotY + 20);
-            ctx.lineTo(400, pivotY + 20); // Bodenplatte
-            ctx.stroke();
-
-            // Rückwand des Gehäuses (wo das Schraubloch/Halterung sitzt)
-            ctx.lineWidth = 6;
-            ctx.beginPath();
-            ctx.moveTo(350, pivotY + 20);
