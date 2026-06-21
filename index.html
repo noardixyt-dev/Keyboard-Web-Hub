@@ -2,235 +2,264 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Melatonin | 1:1 Reconstruction</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T3PA Loadcell Pedalweg-Simulator</title>
     <style>
-        :root {
-            --bg: #1a1a2e;
-            --fire: #ff6d24;
-            --glow: #ffcf40;
-            --photo-accent: #ffb7ce;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e24;
+            color: #f5f5f7;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-
-        body, html {
-            margin: 0; padding: 0; height: 100%;
-            background: var(--bg); font-family: 'Inter', sans-serif;
-            overflow: hidden; display: flex; align-items: center; justify-content: center;
+        h1 {
+            color: #ff4500;
+            margin-bottom: 5px;
         }
-
-        /* Spielwelt */
-        .world {
-            width: 1000px; height: 600px;
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(40px);
-            border-radius: 50px; border: 1px solid rgba(255,255,255,0.08);
-            position: relative; overflow: hidden;
+        p.subtitle {
+            color: #a0a0a5;
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
         }
-
-        /* Die Leine */
-        .rope {
-            position: absolute; top: 160px; width: 100%; height: 2px;
-            background: rgba(255,255,255,0.1); z-index: 1;
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            max-width: 1100px;
+            justify-content: center;
         }
-
-        /* Das Foto */
-        .photo {
-            position: absolute; top: 160px; height: 180px;
-            background: #fff; padding: 8px; padding-bottom: 25px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            transform-origin: top center;
-            z-index: 5;
-            display: none;
-            /* Der Burn-Effekt von unten nach oben */
-            -webkit-mask-image: linear-gradient(to top, transparent var(--burn), black var(--burn));
-            mask-image: linear-gradient(to top, transparent var(--burn), black var(--burn));
-            --burn: 0%;
+        .panel {
+            background-color: #2a2a35;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
-
-        .photo-inner {
-            width: 100%; height: 100%;
-            background: linear-gradient(135deg, #a2d2ff, var(--photo-accent));
+        .controls-panel {
+            flex: 1;
+            min-width: 320px;
+            max-width: 400px;
         }
-
-        /* Glühende Kante beim Brennen */
-        .photo.burning::after {
-            content: ''; position: absolute; bottom: var(--burn); left: 0;
-            width: 100%; height: 12px; background: var(--glow);
-            filter: blur(6px); box-shadow: 0 0 20px var(--fire);
+        .visual-panel {
+            flex: 1.5;
+            min-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-
-        /* Mechanisches Feuerzeug */
-        .zippo {
-            position: absolute; bottom: 60px; left: 50%;
-            transform: translateX(-50%); width: 80px; height: 120px;
-            z-index: 100;
+        .control-group {
+            margin-bottom: 20px;
         }
-
-        .zippo-body { position: absolute; bottom: 0; width: 100%; height: 75px; background: #333; border-radius: 4px; }
-        .zippo-lid {
-            position: absolute; bottom: 75px; width: 100%; height: 35px; background: #444;
-            border-radius: 4px 4px 0 0; transform-origin: left bottom;
-            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
         }
-        .zippo.open .zippo-lid { transform: rotate(-120deg) translateX(-5px); }
-
-        .flame {
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-            width: 24px; height: 50px; background: var(--fire);
-            border-radius: 50% 50% 20% 20%; filter: blur(4px);
-            opacity: 0; box-shadow: 0 0 30px var(--fire);
+        input[type="range"] {
+            width: 100%;
+            accent-color: #ff4500;
         }
-        .zippo.open .flame { opacity: 1; animation: flicker 0.1s infinite; }
-        @keyframes flicker { 50% { transform: translateX(-50%) scale(1.1); } }
-
-        /* UI */
-        #ui {
-            position: absolute; top: 30px; width: 100%; text-align: center;
-            color: white; letter-spacing: 10px; opacity: 0.3; font-weight: 100;
+        .value-disp {
+            color: #ff4500;
+            font-weight: bold;
+            float: right;
         }
-
-        #start-screen {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.8);
-            z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        .results {
+            background-color: #191920;
+            border-left: 4px solid #ff4500;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 25px;
         }
-
-        button {
-            padding: 15px 50px; font-size: 18px; border-radius: 50px;
-            border: none; cursor: pointer; font-weight: bold; background: #fff;
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+        }
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+        .highlight {
+            color: #00ffcc;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        canvas {
+            background-color: #191920;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .legend {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #a0a0a5;
+            display: flex;
+            gap: 15px;
+        }
+        .legend-item span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+            vertical-align: middle;
         }
     </style>
 </head>
 <body>
 
-<div class="world">
-    <div id="ui">LISTEN</div>
-    <div id="start-screen">
-        <h1 style="color:white; letter-spacing: 15px;">MELATONIN</h1>
-        <button id="start-btn">START DREAM</button>
+    <h1>T3PA Loadcell Pedalweg-Simulator</h1>
+    <p class="subtitle">Simuliere die Hebelwirkung und den Weg deines Drift-/GT-Setups</p>
+
+    <div class="container">
+        <!-- CONTROLS PANEL -->
+        <div class="panel controls-panel">
+            <div class="control-group">
+                <label for="pedalLength">Gesamtlänge des Pedalarms (cm):
+                    <span id="pedalLengthVal" class="value-disp">18</span>
+                </label>
+                <input type="range" id="pedalLength" min="15" max="25" step="1" value="18">
+            </div>
+
+            <div class="control-group">
+                <label for="loadcellHeight">Montagehöhe der Loadcell (cm vom Drehpunkt):
+                    <span id="loadcellHeightVal" class="value-disp">5</span>
+                </label>
+                <input type="range" id="loadcellHeight" min="2" max="15" step="0.5" value="5">
+            </div>
+
+            <div class="control-group">
+                <label for="stackCompression">Weg des Gummi/Feder-Stacks (cm Kompression):
+                    <span id="stackCompressionVal" class="value-disp">0.6</span>
+                </label>
+                <input type="range" id="stackCompression" min="0.2" max="1.5" step="0.1" value="0.6">
+            </div>
+
+            <div class="results">
+                <div class="result-item">
+                    <span>Hebelverhältnis (Fuß zu Loadcell):</span>
+                    <span id="ratioResult">3.6 : 1</span>
+                </div>
+                <div class="result-item" style="margin-top: 10px;">
+                    <span>Dein Pedalweg am Fuß (Travel):</span>
+                    <span id="travelResult" class="highlight">2.16 cm</span>
+                </div>
+                <div class="result-item" style="font-size: 0.85rem; color: #a0a0a5; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px;">
+                    <span id="adviceText">Perfekt fürs Driften! Viel Weg für präzise Gewichtsverlagerung.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISUAL PANEL -->
+        <div class="panel visual-panel">
+            <canvas id="pedalCanvas" width="450" height="400"></canvas>
+            <div class="legend">
+                <div class="legend-item"><span style="background: #ff4500;"></span>Pedalarm / Fußplatte</div>
+                <div class="legend-item"><span style="background: #00ffcc;"></span>Loadcell / Elastomer</div>
+                <div class="legend-item"><span style="background: #555566;"></span>Basis Gehäuse</div>
+            </div>
+        </div>
     </div>
-    
-    <div class="rope"></div>
-    <div id="stage"></div>
 
-    <div class="zippo" id="zippo">
-        <div class="flame"></div>
-        <div class="zippo-lid"></div>
-        <div class="zippo-body"></div>
-    </div>
-</div>
+    <script>
+        // DOM Elemente abgreifen
+        const pedalLengthSlider = document.getElementById('pedalLength');
+        const loadcellHeightSlider = document.getElementById('loadcellHeight');
+        const stackCompressionSlider = document.getElementById('stackCompression');
 
-<script>
-    let audioCtx, startTime, isSpace = false, phase = 'call';
-    let photos = [];
-    const bpm = 92;
-    const beat = 60000 / bpm;
-    const loop = beat * 8;
+        const pedalLengthVal = document.getElementById('pedalLengthVal');
+        const loadcellHeightVal = document.getElementById('loadcellHeightVal');
+        const stackCompressionVal = document.getElementById('stackCompressionVal');
 
-    function playNote(freq, vol, dur, type='sine') {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        g.gain.setValueAtTime(vol, audioCtx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-        o.connect(g); g.connect(audioCtx.destination);
-        o.start(); o.stop(audioCtx.currentTime + dur);
-    }
+        const ratioResult = document.getElementById('ratioResult');
+        const travelResult = document.getElementById('travelResult');
+        const adviceText = document.getElementById('adviceText');
 
-    function playShutter() {
-        playNote(1600, 0.02, 0.05, 'square'); // Click
-        setTimeout(() => playNote(800, 0.01, 0.03, 'sine'), 30); // Mech
-    }
+        const canvas = document.getElementById('pedalCanvas');
+        const ctx = canvas.getContext('2d');
 
-    function spawn() {
-        const stage = document.getElementById('stage');
-        stage.innerHTML = "";
-        photos = [];
-        // Pattern: Hit, Hit, Long Note
-        const pattern = [
-            { t: 2, w: 110, len: 1 }, 
-            { t: 3, w: 110, len: 1 }, 
-            { t: 5, w: 350, len: 3 }
-        ];
+        // Animation Variable
+        let animPhase = 0;
 
-        pattern.forEach(p => {
-            const el = document.createElement('div');
-            el.className = 'photo';
-            el.style.width = p.w + "px";
-            el.innerHTML = '<div class="photo-inner"></div>';
-            stage.appendChild(el);
-            photos.push({ el, t: p.t, w: p.w, burnt: 0, triggered: false });
-        });
-    }
+        function updateSimulation() {
+            // Werte aus den Slidern holen
+            const L = parseFloat(pedalLengthSlider.value);
+            const h = parseFloat(loadcellHeightSlider.value);
+            const c = parseFloat(stackCompressionSlider.value);
 
-    function loopEngine() {
-        const now = performance.now();
-        const elapsed = (now - startTime) % loop;
-        const curBeat = elapsed / beat;
-
-        document.getElementById('ui').innerText = phase === 'call' ? "LISTEN" : "YOUR TURN";
-
-        photos.forEach(p => {
-            const x = 500 + (p.t - curBeat) * 280; // Speed
-            p.el.style.left = x + "px";
-            p.el.style.display = 'block';
-
-            // Call Phase: Timing Guide
-            if (phase === 'call' && Math.abs(curBeat - p.t) < 0.08 && !p.triggered) {
-                playShutter();
-                p.el.style.transform = "scale(1.08)";
-                setTimeout(() => p.el.style.transform = "scale(1)", 100);
-                p.triggered = true;
+            // Begrenzung: Loadcell-Höhe darf nicht länger als der Hebel sein
+            if (h > L - 2) {
+                loadcellHeightSlider.value = L - 2;
+                return updateSimulation();
             }
 
-            // Response Phase: Actual Burning
-            if (phase === 'response') {
-                const rect = p.el.getBoundingClientRect();
-                const center = window.innerWidth / 2;
-                if (isSpace && center >= rect.left && center <= rect.right) {
-                    p.el.classList.add('burning');
-                    p.burnt = Math.min(100, p.burnt + 1.8);
-                    p.el.style.setProperty('--burn', p.burnt + "%");
-                } else {
-                    p.el.classList.remove('burning');
-                }
+            // Werte in der GUI updaten
+            pedalLengthVal.innerText = L;
+            loadcellHeightVal.innerText = h;
+            stackCompressionVal.innerText = c;
+
+            // Berechnung über das Hebelgesetz (Strahlensatz)
+            // Weg am Fuß (T) / Kompression am Stack (c) = Länge Arm (L) / Höhe Loadcell (h)
+            const ratio = L / h;
+            const pedalTravel = c * ratio;
+
+            // Ergebnisse anzeigen
+            ratioResult.innerText = ratio.toFixed(1) + " : 1";
+            travelResult.innerText = pedalTravel.toFixed(2) + " cm";
+
+            // Fahrempfehlungs-Text dynamisch anpassen
+            if (pedalTravel < 1.0) {
+                adviceText.innerText = "🏎️ F1 / Formel-Setup: Extrem harter, kurzer Weg. Perfekt für reines Muskelgedächtnis, ungeeignet zum Driften.";
+                adviceText.style.color = "#ff6666";
+            } else if (pedalTravel >= 1.0 && pedalTravel <= 2.2) {
+                adviceText.innerText = "🏁 GT3 / Allround-Setup: Optimaler Kompromiss. Genug Weg für No Hesi Trail-Braking und solide Wand beim harten Stoppen.";
+                adviceText.style.color = "#00ffcc";
+            } else {
+                adviceText.innerText = "🔄 Drift / Street-Setup: Hervorragend! Sehr viel Pedalweg vorhanden. Perfekt, um das Auto sanft anzustellen und das Gewicht zu verlagern.";
+                adviceText.style.color = "#66ccff";
             }
-        });
 
-        if (curBeat > 7.9 && !this.waiting) {
-            this.waiting = true;
-            setTimeout(() => {
-                phase = phase === 'call' ? 'response' : 'call';
-                if(phase === 'call') {
-                    // Lo-Fi Piano Harmony
-                    [261, 329, 392].forEach(f => playNote(f, 0.03, 3)); 
-                }
-                spawn();
-                this.waiting = false;
-            }, 100);
+            drawPedal(L, h, c, pedalTravel);
         }
-        requestAnimationFrame(loopEngine);
-    }
 
-    window.onkeydown = (e) => {
-        if (e.code === 'Space' && !isSpace) {
-            isSpace = true;
-            document.getElementById('zippo').classList.add('open');
-            playNote(1400, 0.04, 0.05, 'square'); // Zippo Click
-        }
-    };
-    window.onkeyup = (e) => {
-        if (e.code === 'Space') {
-            isSpace = false;
-            document.getElementById('zippo').classList.remove('open');
-        }
-    };
+        function drawPedal(L, h, c, totalTravel) {
+            // Canvas löschen
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    document.getElementById('start-btn').onclick = function() {
-        audioCtx = new AudioContext();
-        document.getElementById('start-screen').style.display = 'none';
-        startTime = performance.now();
-        spawn();
-        loopEngine();
-    };
-</script>
-</body>
-</html>
+            // Skalierungsfaktor von cm zu Pixeln (z.B. 1 cm = 15 Pixel)
+            const scale = 15;
+
+            // Fixer Drehpunkt (Pivot) des Pedals im Canvas unten links
+            const pivotX = 120;
+            const pivotY = 350;
+
+            // Animierte Bremsbetätigung (Sinus-Welle für flüssiges Drücken und Loslassen)
+            animPhase += 0.04;
+            const currentPressFactor = (Math.sin(animPhase) + 1) / 2; // Wert zwischen 0 und 1
+
+            // Berechne den aktuellen Winkel des Pedals im Ruhezustand (ca. 75 Grad zur Horizontalen)
+            const baseAngle = -75 * Math.PI / 180;
+            
+            // Maximaler Auslenkungswinkel basierend auf dem errechneten Travel am oberen Ende
+            // Bogenmaß Annäherung: Winkel = Weg / Länge
+            const maxAlpha = (totalTravel / L);
+            const currentAlpha = maxAlpha * currentPressFactor;
+            const currentAngle = baseAngle + currentAlpha;
+
+            // --- 1. GEHÄUSE / PLASTIKBASIS ZEICHNEN ---
+            ctx.strokeStyle = "#555566";
+            ctx.lineWidth = 10;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            ctx.moveTo(30, pivotY + 20);
+            ctx.lineTo(400, pivotY + 20); // Bodenplatte
+            ctx.stroke();
+
+            // Rückwand des Gehäuses (wo das Schraubloch/Halterung sitzt)
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(350, pivotY + 20);
