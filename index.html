@@ -129,7 +129,7 @@
 <body>
 
     <h1>T3PA Loadcell Live Pedalweg-Simulator</h1>
-    <p class="subtitle">Ziehe an den Reglern, um das Verhalten deiner Bremse live zu berechnen</p>
+    <p class="subtitle">Gehostet auf GitHub Pages - Komplett entpackter Programmcode</p>
 
     <div class="container">
         <div class="panel controls-panel">
@@ -197,52 +197,45 @@
         const loadcellHeightSlider = document.getElementById('loadcellHeight');
         const stackCompressionSlider = document.getElementById('stackCompression');
         const pedalForceSlider = document.getElementById('pedalForce');
-
         const canvas = document.getElementById('pedalCanvas');
         const ctx = canvas.getContext('2d');
 
         function updateSimulation() {
-            let L = parseFloat(pedalLengthSlider.value);
-            let h = parseFloat(loadcellHeightSlider.value);
-            let c = parseFloat(stackCompressionSlider.value);
-            let forcePercent = parseFloat(pedalForceSlider.value);
+            let L = parseFloat(pedalLengthSlider.value) || 18;
+            let h = parseFloat(loadcellHeightSlider.value) || 5;
+            let c = parseFloat(stackCompressionSlider.value) || 0.8;
+            let forcePercent = parseFloat(pedalForceSlider.value) || 0;
 
-            // Schutz vor Geometriefehlern
             if (h >= L) {
                 h = L - 1;
                 loadcellHeightSlider.value = h;
             }
 
-            // Zahlenwerte direkt aktualisieren
             document.getElementById('pedalLengthVal').innerText = L;
             document.getElementById('loadcellHeightVal').innerText = h;
             document.getElementById('stackCompressionVal').innerText = c;
             document.getElementById('pedalForceVal').innerText = forcePercent + " %";
 
-            // Hebel-Mathematik (Strahlensatz)
             const ratio = L / h;
             const maxPedalTravel = c * ratio;
             const currentLiveTravel = maxPedalTravel * (forcePercent / 100);
 
-            // Outputs anzeigen
             document.getElementById('ratioResult').innerText = ratio.toFixed(1) + " : 1";
             document.getElementById('travelResult').innerText = maxPedalTravel.toFixed(2) + " cm";
             document.getElementById('liveTravelResult').innerText = currentLiveTravel.toFixed(2) + " cm";
 
-            // Drift-Bewertungstext updaten
             const advice = document.getElementById('adviceText');
             if (maxPedalTravel < 1.2) {
-                advice.innerText = "🏎️ F1-Profil: Extrem harter, kurzer Weg. Perfekt für reines Muskelgedächtnis, ungeeignet zum Driften.";
+                advice.innerText = "🏎️ F1-Profil: Extrem harter, kurzer Weg. Ungeeignet zum Driften.";
                 advice.style.color = "#ff6666";
             } else if (maxPedalTravel >= 1.2 && maxPedalTravel <= 2.2) {
-                advice.innerText = "🏁 GT3 / No Hesi Profile: Optimaler Allround-Kompromiss. Genug Weg für präzises Trail-Braking.";
+                advice.innerText = "🏁 GT3 / No Hesi Profile: Optimaler Allround-Kompromiss für Trail-Braking.";
                 advice.style.color = "#00ffcc";
             } else {
-                advice.innerText = "🔄 Drift-Profil: Genial! Sehr viel Pedalweg vorhanden. Perfekt, um das Auto sanft anzustellen.";
+                advice.innerText = "🔄 Drift-Profil: Genial! Sehr viel Pedalweg vorhanden. Perfekt für Gewichtsverlagerung.";
                 advice.style.color = "#66ccff";
             }
 
-            // Zeichnen ausführen
             drawPedalGraph(L, h, c, maxPedalTravel, forcePercent / 100);
         }
 
@@ -258,10 +251,22 @@
             const currentAlpha = maxAlpha * pressFactor;
             const currentAngle = baseAngle + currentAlpha;
 
-            //Gehäusebasis
+            // Gehäuse-Bodenplatte
             ctx.strokeStyle = "#555566";
             ctx.lineWidth = 10;
             ctx.lineCap = "round";
-            ctx.beginPath(); ctx.moveTo(30, pivotY + 20); ctx.lineTo(400, pivotY + 20); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(30, pivotY + 20);
+            ctx.lineTo(400, pivotY + 20);
+            ctx.stroke();
 
+            // Gehäuse-Rückwand
             ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(350, pivotY + 20);
+            ctx.lineTo(350, pivotY - 180);
+            ctx.stroke();
+
+            // Loadcell Halterungsschiene
+            const lcHalterY = pivotY + (-h * scale);
+ctx.strokeStyle = "#444455";ctx.lineWidth = 4;ctx.beginPath();ctx.moveTo(350, lcHalterY);ctx.lineTo(260, lcHalterY);ctx.stroke();// Graue Bar-Loadcellctx.fillStyle = "#708090";ctx.fillRect(230, lcHalterY - 8, 30, 16);// Elastomer-Kompressionconst currentCompressionPx = (c * scale) * pressFactor;const initialStackLength = 65;const currentStackLength = initialStackLength - currentCompressionPx;ctx.fillStyle = "#00ffcc";ctx.fillRect(230 - currentStackLength, lcHalterY - 12, currentStackLength, 24);// Hebelarm (Stahlarm)const armEndX = pivotX + (L * scale) * Math.cos(currentAngle);const armEndY = pivotY + (L * scale) * Math.sin(currentAngle);ctx.strokeStyle = "#dbdbdb";ctx.lineWidth = 14;ctx.lineCap = "round";ctx.beginPath();ctx.moveTo(pivotX, pivotY);ctx.lineTo(armEndX, armEndY);ctx.stroke();// Pivot Drehpunktctx.fillStyle = "#ff4500";ctx.beginPath();ctx.arc(pivotX, pivotY, 8, 0, 2 * Math.PI);ctx.fill();// Trittplatte (Faceplate)const plateAngle = currentAngle + Math.PI / 2;const hw = 25;ctx.strokeStyle = "#ff4500";ctx.lineWidth = 6;ctx.beginPath();ctx.moveTo(armEndX - hw * Math.cos(plateAngle), armEndY - hw * Math.sin(plateAngle));ctx.lineTo(armEndX + hw * Math.cos(plateAngle), armEndY + hw * Math.sin(plateAngle));ctx.stroke();// Bögen (Hier ist der übersichtliche Block aus deinem Screenshot!)if (pressFactor > 0) {ctx.strokeStyle = "#ff4500";ctx.lineWidth = 3;ctx.beginPath();ctx.arc(pivotX, pivotY, L * scale, baseAngle, baseAngle + currentAlpha);ctx.stroke();}ctx.strokeStyle = "rgba(255, 69, 0, 0.15)";ctx.lineWidth = 1;ctx.beginPath();ctx.arc(pivotX, pivotY, L * scale, baseAngle, baseAngle + maxAlpha);ctx.stroke();}// Event-Listener für Echtzeit-SliderbewegungenpedalLengthSlider.addEventListener('input', updateSimulation);loadcellHeightSlider.addEventListener('input', updateSimulation);stackCompressionSlider.addEventListener('input', updateSimulation);pedalForceSlider.addEventListener('input', updateSimulation);// App einmalig initialisierenupdateSimulation();
